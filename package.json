@@ -1,0 +1,30 @@
+{
+  "name": "lingyun-user-center",
+  "version": "1.0.0",
+  "description": "Enterprise user center with login, registration, profile management.",
+  "keywords": [
+    "user center",
+    "authentication",
+    "profile management"
+  ],
+  "author": "mlinyun <lingyun2311@gmail.com>",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": "^22.12.0 || ^24.12.0"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.0.9",
+      "onFail": "download"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\"",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

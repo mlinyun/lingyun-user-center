@@ -1,0 +1,13 @@
+# Ignore IDE configuration files
+.idea/
+.vscode/
+
+# Ignore build artifacts
+build/
+dist/
+
+# Ignore log files
+*.log
+
+# Ignore node modules
+node_modules/
