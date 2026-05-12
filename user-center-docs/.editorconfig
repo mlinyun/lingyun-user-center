@@ -1,0 +1,4 @@
+[*.md]
+indent_size = 2
+# 不自动删除行尾空格
+trim_trailing_whitespace = false

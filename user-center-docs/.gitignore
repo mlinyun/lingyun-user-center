@@ -1,0 +1,4 @@
+node_modules
+.eslintcache
+docs/.vitepress/cache
+docs/.vitepress/dist

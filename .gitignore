@@ -7,7 +7,7 @@ build/
 dist/
 
 # Ignore log files
-*.log
+**/logs/
 
 # Ignore node modules
 node_modules/

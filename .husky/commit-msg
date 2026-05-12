@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+# 运行 commitlint 命令
+# 该命令会检查提交信息是否符合规范
+echo "🐶 Running commitlint on commit message..."
+if ! pnpm commitlint --edit "$1"; then
+    echo "🚫 Commit message does not meet the commitlint rules. Please fix your commit message."
+    exit 1
+fi
+
+# 如果 commitlint 检查通过，继续执行提交
+echo "✅ Commit message is valid. Proceeding with commit..."
+exit 0

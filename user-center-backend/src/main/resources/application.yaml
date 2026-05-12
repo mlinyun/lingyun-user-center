@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: user-center-backend
+  profiles:
+    active: local
+
+server:
+  port: 8100
+  address: localhost
+  compression:
+    enabled: true
+  servlet:
+    context-path: /api
+    session:
+      cookie:
+        max-age: 604800
+
+logging:
+  file:
+    name: logs/user-center-backend.log
+  level:
+    root: info
+  logback:
+    rollingpolicy:
+      max-history: 2000
+      max-file-size: 5MB
+      total-size-cap: 1GB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.mlinyun.usercenter.model.entity
+  global-config:
+    enable-sql-runner: true
+    db-config:
+      logic-delete-field: isDeleted
+      logic-not-delete-value: 0
+      logic-delete-value: 1
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+  basic:
+    enable: true
+    username: admin
+    password: admin1024

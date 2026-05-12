@@ -32,3 +32,7 @@ indent_size = 2
 indent_size = 2
 # 不自动删除行尾空格
 trim_trailing_whitespace = false
+
+# 针对 HTML 文件的特定设置
+[*.html]
+indent_size = 2

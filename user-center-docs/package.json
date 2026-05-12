@@ -1,0 +1,37 @@
+{
+  "name": "user-center-docs",
+  "version": "1.0.0",
+  "description": "Documentation for User Center",
+  "keywords": [
+    "user center",
+    "authentication",
+    "profile management"
+  ],
+  "author": "mlinyun <lingyun2311@gmail.com>",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": "^22.12.0 || ^24.12.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --fix --cache",
+    "format": "prettier --write .",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@eslint/markdown": "^8.0.1",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
+    "jiti": "^2.7.0",
+    "prettier": "3.8.3",
+    "typescript-eslint": "^8.59.2",
+    "vitepress": "2.0.0-alpha.17"
+  }
+}

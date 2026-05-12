@@ -1,0 +1,9 @@
+:root {
+  /* 首页标题 */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(135deg, #52e5e7 10%, #130cb7 100%);
+
+  /* 图标背景 */
+  --vp-home-hero-image-background-image: linear-gradient(135deg, #3c8ce7 10%, #00eaff 100%);
+  --vp-home-hero-image-filter: blur(80px);
+}

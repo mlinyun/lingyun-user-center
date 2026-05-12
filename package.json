@@ -8,6 +8,7 @@
     "profile management"
   ],
   "author": "mlinyun <lingyun2311@gmail.com>",
+  "type": "module",
   "private": true,
   "license": "MIT",
   "engines": {
@@ -22,9 +23,28 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint-staged": "lint-staged",
+    "commit": "cz",
+    "commitlint": "commitlint --edit",
+    "backend:check": "bash ./scripts/backend-pre-commit-check.sh",
+    "backend:check:staged": "pnpm backend:check -- staged",
+    "backend:check:full": "pnpm backend:check -- full"
   },
   "devDependencies": {
-    "husky": "^9.1.7"
+    "@commitlint/cli": "^21.0.0",
+    "@commitlint/config-conventional": "^21.0.0",
+    "@commitlint/types": "^21.0.0",
+    "@types/node": "^25.6.2",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.4",
+    "typescript": "^6.0.3"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }

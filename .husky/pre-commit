@@ -1,1 +1,21 @@
-pnpm test
+#!/usr/bin/env sh
+set -e
+
+# 运行 lint-staged 命令
+# 该命令会检查暂存区的文件，并根据配置的规则进行 lint 检查
+echo "🐶 Running linters on staged files..."
+if ! pnpm lint-staged; then
+    echo "🚫 Lint-staged check failed. Please fix your code before committing."
+    exit 1
+fi
+
+# 如果 lint-staged 检查通过，就进入后端项目进行检查
+echo "✅ Lint-staged check passed. Now checking backend code..."
+if ! pnpm backend:check -- "${BACKEND_CHECK_MODE:-staged}"; then
+    echo "🚫 Backend code check failed. Please fix your code before committing."
+    exit 1
+fi
+
+# 如果后端检查也通过，继续执行提交
+echo "✅ Backend code check passed. Proceeding with commit..."
+exit 0
