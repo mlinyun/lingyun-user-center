@@ -3,6 +3,12 @@ spring:
     name: user-center-backend
   profiles:
     active: local
+  session:
+    timeout: 7d
+    data:
+      redis:
+        namespace: user-center:session
+        repository-type: indexed
 
 server:
   port: 8100
@@ -12,8 +18,9 @@ server:
   servlet:
     context-path: /api
     session:
+      timeout: 7d
       cookie:
-        max-age: 604800
+        max-age: 7d
 
 logging:
   file:
