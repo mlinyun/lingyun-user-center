@@ -42,18 +42,166 @@ export default defineConfig({
             },
         },
         nav: [
-            { text: "Home", link: "/" },
-            { text: "Examples", link: "/markdown-examples" },
-        ],
-        sidebar: [
             {
-                text: "Examples",
+                text: "首页",
+                link: "/",
+            },
+            {
+                text: "项目介绍",
+                link: "/introduce/project-introduction",
+            },
+            {
+                text: "项目设计",
                 items: [
-                    { text: "Markdown Examples", link: "/markdown-examples" },
-                    { text: "Runtime API Examples", link: "/api-examples" },
+                    {
+                        text: "文档01 项目演示",
+                        link: "/design/project-demonstration",
+                    },
+                    {
+                        text: "文档02 需求分析",
+                        link: "/design/requirement-analysis",
+                    },
+                    {
+                        text: "文档03 数据库设计",
+                        link: "/design/database-design",
+                    },
+                    {
+                        text: "文档04 接口文档",
+                        link: "/design/api-documentation",
+                    },
+                ],
+            },
+            {
+                text: "项目开发",
+                items: [
+                    {
+                        text: "文档05 前端代码初始化",
+                        link: "/develop/frontend-initialization",
+                    },
+                    {
+                        text: "文档06 后端代码初始化",
+                        link: "/develop/backend-initialization",
+                    },
+                    {
+                        text: "文档07 项目数据库设计",
+                        link: "/develop/project-database-design",
+                    },
+                    {
+                        text: "文档08 实现登录注册功能",
+                        link: "/develop/authentication-implementation",
+                    },
+                    {
+                        text: "文档09 实现用户管理功能",
+                        link: "/develop/user-management",
+                    },
+                    {
+                        text: "文档10 前端页面魔改与功能实现",
+                        link: "/develop/frontend-enhancements",
+                    },
+                    {
+                        text: "文档11 前后端项目优化",
+                        link: "/develop/project-optimization",
+                    },
+                    {
+                        text: "文档12 前端项目重新出发",
+                        link: "/develop/frontend-rework",
+                    },
+                ],
+            },
+            {
+                text: "项目部署",
+                items: [
+                    {
+                        text: "文档13 项目部署方案",
+                        link: "/deploy/deployment-environment",
+                    },
+                    {
+                        text: "文档14 后端项目部署",
+                        link: "/deploy/backend-deployment",
+                    },
+                    {
+                        text: "文档15 前端项目部署",
+                        link: "/deploy/frontend-deployment",
+                    },
                 ],
             },
         ],
+
+        sidebar: {
+            "/introduce/": [
+                {
+                    text: "文档00 项目介绍",
+                    link: "/introduce/project-introduction",
+                },
+            ],
+            "/design/": [
+                {
+                    text: "文档01 项目演示",
+                    link: "/design/project-demonstration",
+                },
+                {
+                    text: "文档02 需求分析",
+                    link: "/design/requirement-analysis",
+                },
+                {
+                    text: "文档03 数据库设计",
+                    link: "/design/database-design",
+                },
+                {
+                    text: "文档04 接口文档",
+                    link: "/design/api-documentation",
+                },
+            ],
+            "/develop/": [
+                {
+                    text: "文档05 前端代码初始化",
+                    link: "/develop/frontend-initialization",
+                },
+                {
+                    text: "文档06 后端代码初始化",
+                    link: "/develop/backend-initialization",
+                },
+                {
+                    text: "文档07 项目数据库设计",
+                    link: "/develop/project-database-design",
+                },
+                {
+                    text: "文档08 实现登录注册功能",
+                    link: "/develop/authentication-implementation",
+                },
+                {
+                    text: "文档09 实现用户管理功能",
+                    link: "/develop/user-management",
+                },
+                {
+                    text: "文档10 前端页面魔改与功能实现",
+                    link: "/develop/frontend-enhancements",
+                },
+                {
+                    text: "文档11 前后端项目优化",
+                    link: "/develop/project-optimization",
+                },
+                {
+                    text: "文档12 前端项目重新出发",
+                    link: "/develop/frontend-rework",
+                },
+            ],
+            "/deploy/": [
+                {
+                    text: "文档13 部署环境准备",
+                    link: "/deploy/deployment-environment",
+                },
+                {
+                    text: "文档14 后端项目部署",
+                    link: "/deploy/backend-deployment",
+                },
+                {
+                    text: "文档15 前端项目部署",
+                    link: "/deploy/frontend-deployment",
+                },
+            ],
+        },
+
         outline: {
             label: "本页目录",
             level: [2, 3],

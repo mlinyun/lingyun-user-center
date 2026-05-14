@@ -11,3 +11,9 @@ dist/
 
 # Ignore node modules
 node_modules/
+
+.github/copilot-instructions.md
+AGENTS.md
+AGENTS-backend.md
+AGENTS-frontend.md
+AGENTS-docs.md
