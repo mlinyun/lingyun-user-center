@@ -3,21 +3,21 @@ spring:
     restart:
       enabled: true
   datasource:
-    url: jdbc:mysql://localhost:3306/user_center?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-    username: user_center_user
-    password: StrongPassword..1024
+    url: ${MYSQL_DATABASE_URL}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      host: localhost
+      host: ${REDIS_HOST}
       port: 6379
-      password: 123456
+      password: ${REDIS_PASSWORD}
       database: 0
       connect-timeout: 3000
   mail:
-    host: smtp.163.com
-    username: your-username
-    password: your-password # 替换为授权码
+    host: ${MAIL_HOST}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     test-connection: true
 
 aliyun:
@@ -40,7 +40,7 @@ cos:
 
 logging:
   level:
-    root: debug
+    root: info
 
 knife4j:
   production: false

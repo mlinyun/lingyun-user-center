@@ -25,6 +25,16 @@ jobs:
       run:
         working-directory: user-center-backend
 
+    env:
+      MYSQL_DATABASE_URL: ${{ secrets.MYSQL_DATABASE_URL }}
+      MYSQL_USERNAME: ${{ secrets.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+      MAIL_HOST: ${{ secrets.MAIL_HOST }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+
     services:
       mysql:
         image: mysql:8.4

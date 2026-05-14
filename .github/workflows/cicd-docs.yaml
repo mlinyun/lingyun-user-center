@@ -38,14 +38,14 @@ jobs:
       - name: Enable Corepack and prepare pnpm
         run: |
           corepack enable
-          corepack prepare pnpm@latest --activate
+          corepack prepare pnpm@11.1.2 --activate
 
       - name: Get pnpm store directory
         id: pnpm-store
         run: echo "store_path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.store_path }}
           key: ${{ runner.os }}-pnpm-${{ hashFiles('user-center-docs/pnpm-lock.yaml') }}
