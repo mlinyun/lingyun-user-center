@@ -64,7 +64,7 @@ jobs:
         run: pnpm stylelint:fix
 
       - name: Format code
-        run: pnpm format:fix
+        run: pnpm format:all
 
       - name: Build
         run: pnpm build
