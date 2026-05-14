@@ -61,4 +61,4 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: docs-dist
-          path: docs/.vitepress/dist/
+          path: user-center-docs/docs/.vitepress/dist
