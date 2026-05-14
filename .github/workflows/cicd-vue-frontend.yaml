@@ -5,11 +5,11 @@ on:
   push:
     paths:
       - "user-center-vue-frontend/**"
-      - ".github/workflows/cicd-frontend.yaml"
+      - "cicd-vue-frontend.yaml"
   pull_request:
     paths:
       - "user-center-vue-frontend/**"
-      - ".github/workflows/cicd-frontend.yaml"
+      - "cicd-vue-frontend.yaml"
   workflow_dispatch:
 
 concurrency:
