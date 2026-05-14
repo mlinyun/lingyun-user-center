@@ -1,0 +1,53 @@
+name: Docs CI/CD Workflow
+run-name: Docs CI/CD Workflow triggered by ${{ github.actor }} on ${{ github.ref_name }} via ${{ github.event_name }}
+
+on:
+  push:
+    paths:
+      - "user-center-docs/**"
+      - ".github/workflows/cicd-docs.yaml"
+  pull_request:
+    paths:
+      - "user-center-docs/**"
+      - ".github/workflows/cicd-docs.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: docs-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Docs
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: user-center-docs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Enable Corepack and prepare pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build docs
+        run: pnpm docs:build
+
+      - name: Upload built docs as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-dist
+          path: docs/.vitepress/dist

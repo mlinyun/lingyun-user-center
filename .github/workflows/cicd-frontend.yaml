@@ -1,0 +1,65 @@
+name: Frontend CI/CD Workflow
+run-name: Frontend CI/CD Workflow triggered by ${{ github.actor }} on ${{ github.ref_name }} via ${{ github.event_name }}
+
+on:
+  push:
+    paths:
+      - "user-center-vue-frontend/**"
+      - ".github/workflows/cicd-frontend.yaml"
+  pull_request:
+    paths:
+      - "user-center-vue-frontend/**"
+      - ".github/workflows/cicd-frontend.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Install, Lint and Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: user-center-vue-frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Enable Corepack and prepare pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Stylelint check
+        run: pnpm stylelint:fix
+
+      - name: Format code
+        run: pnpm format:fix
+
+      - name: Build
+        run: pnpm build
+
+      - name: Upload built frontend as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: dist
