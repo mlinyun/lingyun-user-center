@@ -1,5 +1,6 @@
 packages:
   - "user-center-vue-frontend"
 
-onlyBuiltDependencies:
-  - core-js
+allowBuilds:
+  core-js: true
+  es5-ext: true

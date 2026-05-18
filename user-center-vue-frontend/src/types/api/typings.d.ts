@@ -35,6 +35,11 @@ export declare namespace Api {
         /** 通用操作结果响应体结构 */
         type OperationResultResponse = ApiResponse<OperationResultResponseData>;
 
+        /** 通用字符串响应数据 */
+        type StringResponseData = string;
+        /** 通用字符串响应体结构 */
+        type StringResponse = ApiResponse<StringResponseData>;
+
         /** 排序方式 */
         type SortOrder = "ascend" | "descend";
 

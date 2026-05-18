@@ -89,6 +89,14 @@ jobs:
           done
           mysql -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" < ../user-center-sql/user-center-schema.sql
 
+      - name: Init database tables and data (app user)
+        env:
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        run: |
+          mysql -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" < ../user-center-sql/user-center-table.sql
+          mysql -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" < ../user-center-sql/user-center-data.sql
+
       - name: Run the Maven verify phase
         run: mvn --batch-mode --update-snapshots verify
 

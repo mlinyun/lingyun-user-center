@@ -261,3 +261,25 @@ export const userPhoneResetPwd = (
         successMessage: "密码重置成功",
     });
 };
+
+/**
+ * 用户上传或修改头像.
+ * @name userUploadAvatar
+ * @tags 用户模块
+ * @description 用户上传或修改头像接口，用户通过上传头像文件来更新自己的头像
+ * @request POST `/user/avatar`
+ * @param file 头像文件
+ * @returns 上传后的头像 URL，详见 {@linkcode Api.Common.StringResponse}
+ */
+export const userUploadAvatar = (file: File): Promise<AxiosResponse<Api.Common.StringResponse>> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return http.post<Api.Common.StringResponseData>("/user/avatar", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+        showSuccessMessage: true,
+        successMessage: "头像上传成功",
+    });
+};

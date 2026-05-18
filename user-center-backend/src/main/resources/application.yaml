@@ -2,7 +2,7 @@ spring:
   application:
     name: user-center-backend
   profiles:
-    active: local
+    active: dev
   session:
     timeout: 7d
     data:
