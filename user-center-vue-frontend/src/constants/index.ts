@@ -10,3 +10,14 @@ export { REQUEST_TIMEOUT, CONTENT_TYPE } from "./http";
 
 // 业务状态码相关
 export { BusinessCode, isSuccess, isAuthError, isPermissionError, isServerError, getMessageByCode } from "./code";
+
+// 系统相关
+export {
+    SYSTEM_LOGO,
+    SYSTEM_TITLE,
+    SYSTEM_SUBTITLE,
+    GITHUB_URL,
+    DOCUMENT_URL,
+    CONTACT_EMAIL,
+    DEFAULT_AVATAR,
+} from "./system";

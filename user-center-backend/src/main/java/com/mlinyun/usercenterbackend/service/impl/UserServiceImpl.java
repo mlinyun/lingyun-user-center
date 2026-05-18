@@ -768,7 +768,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 5. 上传文件到对象存储
         File tempFile = null;
         // 需要回写的头像 URL
-        String avatarUrl = loginUser.getUserAvatar();
+        String avatarUrl;
         // 原始头像 URL
         String originalAvatarUrl = cosClientConfig.getHost() + "/" + objectKey;
         // 初始化缩略图 URL，默认为 null

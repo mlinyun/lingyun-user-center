@@ -47,7 +47,7 @@ defineOptions({ name: "MainLayout" });
 }
 
 .content-wrapper {
-    height: calc(100vh - 64px - 70.4px);
+    height: calc(100vh - 64px - 69px);
     padding: 32px;
     border-radius: 4px;
     box-shadow: 0 1px 4px rgb(0 21 41 / 8%);
