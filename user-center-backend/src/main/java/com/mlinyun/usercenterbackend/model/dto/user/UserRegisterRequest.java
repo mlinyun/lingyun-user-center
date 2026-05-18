@@ -1,0 +1,58 @@
+package com.mlinyun.usercenterbackend.model.dto.user;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.mlinyun.usercenterbackend.constant.user.UserConstant;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import java.io.Serial;
+import java.io.Serializable;
+import lombok.Data;
+
+/**
+ * 用户注册请求体.
+ *
+ * <p>
+ * 用于封装用户注册时所需的请求参数
+ * </p>
+ */
+@Data
+@Schema(description = "用户注册请求参数")
+@JsonIgnoreProperties(ignoreUnknown = true) // 忽略未知字段
+public class UserRegisterRequest implements Serializable {
+
+    /**
+     * 序列化版本号.
+     */
+    @Serial
+    private static final long serialVersionUID = 241963540420815477L;
+
+    /**
+     * 登录账号.
+     */
+    @Schema(description = "登录账号", example = "admin", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = UserConstant.ACCOUNT_NOT_NULL_MSG)
+    @Size(min = UserConstant.ACCOUNT_MIN, max = UserConstant.ACCOUNT_MAX, message = UserConstant.ACCOUNT_LENGTH_MSG)
+    @Pattern(regexp = UserConstant.ACCOUNT_REGEX, message = UserConstant.ACCOUNT_FORMAT_MSG)
+    private String userAccount;
+
+    /**
+     * 登录密码.
+     */
+    @Schema(description = "登录密码", example = "Password..1234", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = UserConstant.PWD_NOT_NULL_MSG)
+    @Size(min = UserConstant.PWD_MIN, max = UserConstant.PWD_MAX, message = UserConstant.PWD_LENGTH_MSG)
+    @Pattern(regexp = UserConstant.PWD_REGEX, message = UserConstant.PWD_FORMAT_MSG)
+    private String userPassword;
+
+    /**
+     * 校验密码.
+     */
+    @Schema(description = "校验密码", example = "Password..1234", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = UserConstant.PWD_NOT_NULL_MSG)
+    @Size(min = UserConstant.PWD_MIN, max = UserConstant.PWD_MAX, message = UserConstant.PWD_LENGTH_MSG)
+    @Pattern(regexp = UserConstant.PWD_REGEX, message = UserConstant.PWD_FORMAT_MSG)
+    private String checkPassword;
+
+}

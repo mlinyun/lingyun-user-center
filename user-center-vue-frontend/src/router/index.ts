@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory, type RouteLocationNormalized } from "vue-router";
 import { routes } from "@/router/routes";
 import { BProgress } from "@bprogress/core";
 import { useAuthStore } from "@/stores/auth";
@@ -28,6 +28,59 @@ const router = createRouter({
     routes,
 });
 
+const AUTH_ROUTE_PREFIX = "/auth";
+
+const ROUTE_PATH = {
+    HOME: "/",
+    LOGIN: "/auth/login",
+} as const;
+
+/**
+ * 判断是否为认证相关路由（登录/注册等）.
+ *
+ * @param path 路由路径
+ * @returns 是否为认证相关路由
+ */
+const isAuthRoute = (path: string): boolean => {
+    return path === AUTH_ROUTE_PREFIX || path.startsWith(`${AUTH_ROUTE_PREFIX}/`);
+};
+
+/**
+ * 获取安全的认证重定向路径，确保只允许站内相对路径，避免开放重定向漏洞.
+ *
+ * @param redirect
+ */
+const getSafeAuthRedirect = (redirect: unknown): string => {
+    if (typeof redirect !== "string" || redirect.trim() === "") {
+        return ROUTE_PATH.HOME;
+    }
+
+    // 只允许站内相对路径，避免把外部地址当作回跳目标。
+    if (!redirect.startsWith("/") || redirect.startsWith("//")) {
+        return ROUTE_PATH.HOME;
+    }
+
+    // 禁止包含协议
+    try {
+        // URL 构造函数会抛出异常，如果 redirect 是一个相对路径而不是完整 URL
+        const url = new URL(redirect, window.location.origin);
+        if (url.origin !== window.location.origin) {
+            return ROUTE_PATH.HOME;
+        }
+        return `${url.pathname}${url.search}${url.hash}`;
+    } catch (error) {
+        console.log("Invalid redirect URL, defaulting to home:", error);
+        return ROUTE_PATH.HOME;
+    }
+};
+
+/**
+ * 是否需要鉴权
+ */
+const requiresAuth = (route: RouteLocationNormalized): boolean => {
+    return Boolean(route.meta.requiresAuth);
+};
+
 /**
  * 路由前置守卫.
  */
@@ -36,35 +89,68 @@ router.beforeEach(async (to) => {
     BProgress.start();
 
     const authStore = useAuthStore();
-    const requiresAuth = Boolean(to.meta.requiresAuth);
+    const authRoute = isAuthRoute(to.path);
+    const needAuth = requiresAuth(to);
     const requiredRole = to.meta.requiredRole as Api.User.UserRole | undefined;
 
-    if (requiresAuth) {
-        // 受保护页面采用严格校验，确保服务端 Session 仍然有效
-        await authStore.bootstrap({ strict: true });
+    try {
+        // 已登录用户访问登录/注册页时，自动回跳到目标页或首页
+        if (authRoute && authStore.isAuthenticated) {
+            return getSafeAuthRedirect(to.query.redirect);
+        }
 
-        if (!authStore.isAuthenticated) {
+        // 受保护页面采用严格校验，确保服务端 Session 仍然有效
+        if (needAuth) {
+            await authStore.bootstrap({ strict: true });
+
+            if (!authStore.isAuthenticated) {
+                return {
+                    path: ROUTE_PATH.LOGIN,
+                    query: { redirect: to.fullPath },
+                    replace: true,
+                };
+            }
+
+            /**
+             * RBAC 权限校验
+             */
+            if (requiredRole && authStore.user?.userRole !== requiredRole) {
+                messageUtils.error("当前账号无权访问该页面");
+                return {
+                    path: ROUTE_PATH.HOME,
+                    replace: true,
+                };
+            }
+
+            return true;
+        }
+
+        // 非受保护页面只进行后台静默探测 Session，不阻塞页面跳转
+        if (!authRoute && !authStore.initialized) {
+            void authStore.bootstrap().catch((error) => {
+                console.error("Silent auth bootstrap failed:", error);
+            });
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Router auth guard error:", error);
+
+        //  严格鉴权失败时，清理认证状态并回跳登录页
+        authStore.clearAuthState();
+
+        if (needAuth) {
             return {
-                path: "/auth/login",
-                query: { redirect: to.fullPath },
+                path: ROUTE_PATH.LOGIN,
+                query: {
+                    redirect: to.fullPath,
+                },
+                replace: true,
             };
         }
 
-        if (requiredRole && authStore.user?.userRole !== requiredRole) {
-            messageUtils.error("当前账号无权访问该页面");
-            return "/";
-        }
-    } else if (!authStore.initialized) {
-        // 非受保护页面只进行后台探测，不阻塞页面跳转
-        void authStore.bootstrap();
+        return true;
     }
-
-    // 已登录用户访问登录/注册页时，自动回跳到目标页或首页
-    if (to.path.startsWith("/auth") && authStore.isAuthenticated) {
-        return typeof to.query.redirect === "string" ? to.query.redirect : "/";
-    }
-
-    return true;
 });
 
 /**

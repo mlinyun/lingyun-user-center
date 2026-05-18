@@ -1,0 +1,45 @@
+package com.mlinyun.usercenterbackend.model.dto.user;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.mlinyun.usercenterbackend.constant.captcha.CaptchaConstant;
+import com.mlinyun.usercenterbackend.constant.user.UserConstant;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import java.io.Serial;
+import java.io.Serializable;
+import lombok.Data;
+
+/**
+ * 绑定/换绑邮箱请求体.
+ */
+@Data
+@Schema(description = "用户绑定或换绑邮箱请求参数")
+@JsonIgnoreProperties(ignoreUnknown = true) // 忽略未知字段
+public class UserBindEmailRequest implements Serializable {
+
+    /**
+     * 序列化版本号.
+     */
+    @Serial
+    private static final long serialVersionUID = 6052240315642528739L;
+
+    /**
+     * 邮箱地址.
+     */
+    @Schema(description = "邮箱地址", example = "user@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = UserConstant.EMAIL_NOT_NULL_MSG)
+    @Email(message = UserConstant.EMAIL_FORMAT_MSG)
+    private String userEmail;
+
+    /**
+     * 邮箱验证码.
+     */
+    @Schema(description = "邮箱验证码", example = "382956", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = CaptchaConstant.CODE_NOT_BLANK_MSG)
+    @Size(min = CaptchaConstant.CODE_LENGTH, max = CaptchaConstant.CODE_LENGTH,
+            message = CaptchaConstant.CODE_LENGTH_MSG)
+    private String captchaCode;
+
+}

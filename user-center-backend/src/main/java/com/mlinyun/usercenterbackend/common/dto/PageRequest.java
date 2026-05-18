@@ -25,7 +25,7 @@ public class PageRequest implements Serializable {
      * 序列化版本号.
      */
     @Serial
-    private static final long serialVersionUID = 5537409530019973566L;
+    private static final long serialVersionUID = 5031527981805544364L;
 
     /**
      * 当前页码.

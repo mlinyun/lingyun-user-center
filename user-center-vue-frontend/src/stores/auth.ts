@@ -225,7 +225,7 @@ export const useAuthStore = defineStore(
     {
         persist: {
             // 持久化仅用于“体验优化”，安全判断始终依赖后端 Session。
-            key: "ai-appforge-auth-cache",
+            key: "user-center-auth-cache",
             storage: localStorage,
             // 白名单持久化，避免把不必要的运行时字段写入本地。
             pick: ["authStatus", "user", "lastValidatedAt", "cacheExpiresAt"],

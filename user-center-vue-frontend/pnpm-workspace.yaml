@@ -1,2 +1,5 @@
-allowBuilds:
-    core-js: set this to true or false
+packages:
+  - "user-center-vue-frontend"
+
+onlyBuiltDependencies:
+  - core-js

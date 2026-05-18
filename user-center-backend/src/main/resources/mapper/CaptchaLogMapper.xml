@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mlinyun.usercenterbackend.mapper.CaptchaLogMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.mlinyun.usercenterbackend.model.entity.CaptchaLog">
+
+        <!-- 主键映射 -->
+        <id property="id" column="id"/>
+
+        <!-- 普通字段映射 -->
+        <result property="target" column="target"/>
+        <result property="captchaType" column="captchaType"/>
+        <result property="captchaScene" column="captchaScene"/>
+        <result property="captchaStatus" column="captchaStatus"/>
+        <result property="ipAddress" column="ipAddress"/>
+        <result property="sendTime" column="sendTime"/>
+        <result property="verifyTime" column="verifyTime"/>
+        <result property="createTime" column="createTime"/>
+        <result property="updateTime" column="updateTime"/>
+        <result property="isDelete" column="isDelete"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,target,captchaType,captchaScene,captchaStatus,ipAddress,
+        sendTime,verifyTime,createTime,updateTime,isDelete
+    </sql>
+</mapper>

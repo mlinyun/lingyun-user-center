@@ -20,7 +20,7 @@
       }
     },
     {
-      "files": ["*.json", "*.html"],
+      "files": ["*.json", "*.html", "*.yaml", "*.yml"],
       "options": {
         "tabWidth": 2
       }

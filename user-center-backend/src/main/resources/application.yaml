@@ -2,7 +2,7 @@ spring:
   application:
     name: user-center-backend
   profiles:
-    active: dev
+    active: local
   session:
     timeout: 7d
     data:
@@ -42,6 +42,7 @@ mybatis-plus:
   global-config:
     enable-sql-runner: true
     db-config:
+      id-type: assign_id
       logic-delete-field: isDeleted
       logic-not-delete-value: 0
       logic-delete-value: 1

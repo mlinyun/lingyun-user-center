@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mlinyun.usercenterbackend.mapper.UserMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.mlinyun.usercenterbackend.model.entity.User">
+
+        <!-- 主键映射 -->
+        <id property="id" column="id" jdbcType="BIGINT" />
+
+        <!-- 普通字段映射 -->
+        <result property="userAccount" column="userAccount" jdbcType="VARCHAR" />
+        <result property="userPassword" column="userPassword" jdbcType="VARCHAR" />
+        <result property="userName" column="userName" jdbcType="VARCHAR" />
+        <result property="userAvatar" column="userAvatar" jdbcType="VARCHAR" />
+        <result property="userProfile" column="userProfile" jdbcType="VARCHAR" />
+        <result property="userRole" column="userRole" jdbcType="VARCHAR" />
+        <result property="userGender" column="userGender" jdbcType="TINYINT" />
+        <result property="userPhone" column="userPhone" jdbcType="VARCHAR" />
+        <result property="userEmail" column="userEmail" jdbcType="VARCHAR" />
+        <result property="phoneVerified" column="phoneVerified" jdbcType="TINYINT" />
+        <result property="emailVerified" column="emailVerified" jdbcType="TINYINT" />
+        <result property="userStatus" column="userStatus" jdbcType="TINYINT" />
+        <result property="editTime" column="editTime" jdbcType="TIMESTAMP" />
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP" />
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP" />
+        <result property="isDelete" column="isDelete" jdbcType="BIGINT" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,userAccount,userPassword,userName,userAvatar,userProfile,
+        userRole,userGender,userPhone,userEmail,phoneVerified,
+        emailVerified,userStatus,editTime,createTime,updateTime,
+        isDelete
+    </sql>
+</mapper>

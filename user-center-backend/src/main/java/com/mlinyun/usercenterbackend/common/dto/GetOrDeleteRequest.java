@@ -23,7 +23,7 @@ public class GetOrDeleteRequest implements Serializable {
      * 序列化版本号.
      */
     @Serial
-    private static final long serialVersionUID = 1799978216342363898L;
+    private static final long serialVersionUID = 5280000738504585823L;
 
     /**
      * 主键 ID.

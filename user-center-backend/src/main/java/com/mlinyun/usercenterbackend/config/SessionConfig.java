@@ -1,5 +1,6 @@
 package com.mlinyun.usercenterbackend.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -8,7 +9,9 @@ import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializ
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
+import tools.jackson.databind.DefaultTyping;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 /**
  * Spring Session Redis 配置类.
@@ -41,7 +44,11 @@ public class SessionConfig {
      */
     @Bean("springSessionDefaultRedisSerializer")
     public RedisSerializer<Object> springSessionDefaultRedisSerializer(ObjectMapper objectMapper) {
-        return new GenericJacksonJsonRedisSerializer(objectMapper);
+        BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class)
+                .allowIfSubType("com.mlinyun.usercenterbackend.model.entity").build();
+        ObjectMapper sessionMapper = objectMapper.rebuild()
+                .activateDefaultTyping(ptv, DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY).build();
+        return new GenericJacksonJsonRedisSerializer(sessionMapper);
     }
 
     /**
