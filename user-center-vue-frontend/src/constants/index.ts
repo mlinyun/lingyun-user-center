@@ -21,3 +21,6 @@ export {
     CONTACT_EMAIL,
     DEFAULT_AVATAR,
 } from "./system";
+
+// 正则相关
+export { PWD_REGEX, PHONE_REGEX, CODE_REGEX } from "./validation";
