@@ -69,9 +69,9 @@ public class UserController {
     @ApiOperationSupport(author = "LingYun")
     @PostMapping("/register/account")
     @Operation(summary = "用户注册", description = "通过账号和密码进行注册")
-    public BaseResponse<Long> userRegister(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
+    public BaseResponse<String> userRegister(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userRegisterRequest), ErrorCode.PARAMS_ERROR);
-        long userId = userService.userRegister(userRegisterRequest);
+        String userId = userService.userRegister(userRegisterRequest);
         return ResultUtils.success(userId);
     }
 
@@ -84,9 +84,10 @@ public class UserController {
     @ApiOperationSupport(author = "LingYun")
     @PostMapping("/register/email")
     @Operation(summary = "邮箱注册", description = "通过邮箱验证码注册")
-    public BaseResponse<Long> userEmailRegister(@RequestBody @Valid UserEmailRegisterRequest userEmailRegisterRequest) {
+    public BaseResponse<String> userEmailRegister(
+            @RequestBody @Valid UserEmailRegisterRequest userEmailRegisterRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailRegisterRequest), ErrorCode.PARAMS_ERROR);
-        long userId = userService.userEmailRegister(userEmailRegisterRequest);
+        String userId = userService.userEmailRegister(userEmailRegisterRequest);
         return ResultUtils.success(userId);
     }
 
@@ -99,9 +100,10 @@ public class UserController {
     @ApiOperationSupport(author = "LingYun")
     @PostMapping("/register/phone")
     @Operation(summary = "手机号注册", description = "通过短信验证码注册")
-    public BaseResponse<Long> userPhoneRegister(@RequestBody @Valid UserPhoneRegisterRequest userPhoneRegisterRequest) {
+    public BaseResponse<String> userPhoneRegister(
+            @RequestBody @Valid UserPhoneRegisterRequest userPhoneRegisterRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneRegisterRequest), ErrorCode.PARAMS_ERROR);
-        long userId = userService.userPhoneRegister(userPhoneRegisterRequest);
+        String userId = userService.userPhoneRegister(userPhoneRegisterRequest);
         return ResultUtils.success(userId);
     }
 

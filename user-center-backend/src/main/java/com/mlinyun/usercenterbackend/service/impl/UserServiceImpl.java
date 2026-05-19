@@ -112,7 +112,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 注册成功的用户 ID
      */
     @Override
-    public long userRegister(UserRegisterRequest userRegisterRequest) {
+    public String userRegister(UserRegisterRequest userRegisterRequest) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userRegisterRequest), ErrorCode.PARAMS_ERROR, "用户注册请求体不能为空");
         // 获取请求体中的参数
@@ -137,7 +137,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 注册成功的用户 ID
      */
     @Override
-    public long userEmailRegister(UserEmailRegisterRequest userEmailRegisterRequest) {
+    public String userEmailRegister(UserEmailRegisterRequest userEmailRegisterRequest) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailRegisterRequest), ErrorCode.PARAMS_ERROR, "邮箱注册请求体不能为空");
         // 获取请求体中的参数
@@ -166,7 +166,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 注册成功的用户 ID
      */
     @Override
-    public long userPhoneRegister(UserPhoneRegisterRequest userPhoneRegisterRequest) {
+    public String userPhoneRegister(UserPhoneRegisterRequest userPhoneRegisterRequest) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneRegisterRequest), ErrorCode.PARAMS_ERROR, "手机号注册请求体不能为空");
         // 获取请求体中的参数
@@ -198,7 +198,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param checkPwd 确认密码
      * @return 注册成功的用户 ID
      */
-    private long coreRegister(String account, String email, String phone, String password, String checkPwd) {
+    private String coreRegister(String account, String email, String phone, String password, String checkPwd) {
         // 1. 校验两次密码一致
         ThrowUtils.throwIf(!password.equals(checkPwd), ErrorCode.PARAMS_ERROR, UserConstant.PWD_NOT_MATCH_MSG);
 
@@ -225,7 +225,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean saveResult = this.save(newUser);
         ThrowUtils.throwIf(!saveResult, ErrorCode.OPERATION_ERROR, UserConstant.REGISTER_FAILED_MSG);
 
-        return newUser.getId();
+        return newUser.getId().toString();
     }
 
     /**
@@ -893,7 +893,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 添加成功的用户 ID
      */
     @Override
-    public long adminAddUser(AdminAddUserRequest adminAddUserRequest) {
+    public String adminAddUser(AdminAddUserRequest adminAddUserRequest) {
         // 1. 基本参数校验（通过 @Valid 注解在 Controller 层已完成大部分校验）
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminAddUserRequest), ErrorCode.PARAMS_ERROR, "管理员添加用户请求不能为空");
         // 获取请求体中必填的参数
@@ -950,7 +950,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         ThrowUtils.throwIf(!saveResult, ErrorCode.OPERATION_ERROR, "用户添加失败，请稍后再试");
 
         // 6. 返回新用户 ID
-        return newUser.getId();
+        return newUser.getId().toString();
     }
 
     /**

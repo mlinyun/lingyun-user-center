@@ -62,9 +62,9 @@ public class UserAdminController {
     @PostMapping("/add")
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     @Operation(summary = "管理员添加用户", description = "管理员添加用户接口")
-    public BaseResponse<Long> adminAddUser(@RequestBody @Valid AdminAddUserRequest adminAddUserRequest) {
+    public BaseResponse<String> adminAddUser(@RequestBody @Valid AdminAddUserRequest adminAddUserRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminAddUserRequest), ErrorCode.PARAMS_ERROR);
-        long userId = userService.adminAddUser(adminAddUserRequest);
+        String userId = userService.adminAddUser(adminAddUserRequest);
         return ResultUtils.success(userId);
     }
 

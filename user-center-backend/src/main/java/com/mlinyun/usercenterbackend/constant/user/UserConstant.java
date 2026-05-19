@@ -139,7 +139,7 @@ public final class UserConstant {
     /**
      * 用户默认头像 URL.
      */
-    public static final String AVATAR_DEFAULT_URL = "https://static.mlinyun.com/user-center/avatar/default/avatar.png";
+    public static final String AVATAR_DEFAULT_URL = "https://static.mlinyun.com/user-center/avatar/default/user.png";
 
     /**
      * 头像上传路径.

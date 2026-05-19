@@ -42,7 +42,7 @@ public interface UserService extends IService<User> {
      * @param userRegisterRequest {@linkplain UserRegisterRequest 用户注册请求体}
      * @return 注册成功的用户 ID
      */
-    long userRegister(UserRegisterRequest userRegisterRequest);
+    String userRegister(UserRegisterRequest userRegisterRequest);
 
     /**
      * 邮箱注册服务.
@@ -50,7 +50,7 @@ public interface UserService extends IService<User> {
      * @param userEmailRegisterRequest {@linkplain UserEmailRegisterRequest 邮箱注册请求体}
      * @return 注册成功的用户 ID
      */
-    long userEmailRegister(UserEmailRegisterRequest userEmailRegisterRequest);
+    String userEmailRegister(UserEmailRegisterRequest userEmailRegisterRequest);
 
     /**
      * 手机号注册服务.
@@ -58,7 +58,7 @@ public interface UserService extends IService<User> {
      * @param userPhoneRegisterRequest {@linkplain UserPhoneRegisterRequest 手机号注册请求体}
      * @return 注册成功的用户 ID
      */
-    long userPhoneRegister(UserPhoneRegisterRequest userPhoneRegisterRequest);
+    String userPhoneRegister(UserPhoneRegisterRequest userPhoneRegisterRequest);
 
     /**
      * 用户登录服务.
@@ -190,7 +190,7 @@ public interface UserService extends IService<User> {
      * @param adminAddUserRequest {@linkplain AdminAddUserRequest 管理员添加用户请求体}
      * @return 添加成功的用户 ID
      */
-    long adminAddUser(AdminAddUserRequest adminAddUserRequest);
+    String adminAddUser(AdminAddUserRequest adminAddUserRequest);
 
     /**
      * 管理员根据 id 获取用户信息.
