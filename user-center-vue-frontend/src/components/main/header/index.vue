@@ -6,8 +6,8 @@ import { useRouter } from "vue-router";
 import { SYSTEM_LOGO, SYSTEM_TITLE, GITHUB_URL, DEFAULT_AVATAR } from "@/constants";
 import { DownOutlined, GithubOutlined, LogoutOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons-vue";
 import { useAuthStore } from "@/stores/auth.ts";
-import { message } from "ant-design-vue";
 import { ROUTES } from "@/constants/routes.ts";
+import { messageUtils } from "@/utils/message";
 
 defineOptions({ name: "MainHeader" });
 
@@ -43,11 +43,10 @@ const handleLogout = async () => {
     authStore
         .logout()
         .then(() => {
-            message.success("退出登录成功");
             router.push({ name: ROUTES.LOGIN.name });
         })
         .catch(() => {
-            message.error("退出登录失败");
+            messageUtils.error("退出登录失败");
         });
 };
 

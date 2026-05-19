@@ -14,5 +14,5 @@ export interface ApiResponse<T = unknown> {
     /** 说明消息 */
     message: string;
     /** 响应数据 */
-    data?: T;
+    data: T;
 }

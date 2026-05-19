@@ -2,6 +2,7 @@ import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import { getLoginUserInfo, userLogout } from "@/api/user.ts";
 import type { Api } from "@/types/api/typings";
+import { formatDateTime, parseDateTime } from "@/utils/date";
 
 /**
  * 前端鉴权状态机：
@@ -19,7 +20,7 @@ interface BootstrapOptions {
     strict?: boolean;
 }
 
-const AUTH_CACHE_TTL_MS = 5 * 60 * 1000;
+const AUTH_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const AUTH_REVALIDATE_INTERVAL_MS = 60 * 1000;
 
 /**
@@ -37,9 +38,9 @@ export const useAuthStore = defineStore(
         /** 是否已完成至少一次 bootstrap。 */
         const initialized = ref(false);
         /** 最近一次向后端校验登录态的时间戳。 */
-        const lastValidatedAt = ref<number | null>(null);
+        const lastValidatedAt = ref<string | null>(null);
         /** 本地缓存到期时间戳（用于性能优化，不是安全边界）。 */
-        const cacheExpiresAt = ref<number | null>(null);
+        const cacheExpiresAt = ref<string | null>(null);
 
         /**
          * 并发去重：同一时刻只允许一个 bootstrap 请求在飞行。
@@ -52,7 +53,14 @@ export const useAuthStore = defineStore(
         /** 是否管理员。 */
         const isAdmin = computed(() => user.value?.userRole === "admin");
         /** 本地缓存是否还在有效期内。 */
-        const isCacheValid = computed(() => cacheExpiresAt.value !== null && cacheExpiresAt.value > Date.now());
+        const isCacheValid = computed(() => {
+            if (cacheExpiresAt.value === null) {
+                return false;
+            }
+
+            const expiresAt = parseDateTime(cacheExpiresAt.value);
+            return expiresAt !== null && expiresAt > Date.now();
+        });
 
         /**
          * 设置为“已登录”状态，并刷新时间戳。
@@ -62,8 +70,8 @@ export const useAuthStore = defineStore(
             user.value = loginUser;
             authStatus.value = "authenticated";
             initialized.value = true;
-            lastValidatedAt.value = Date.now();
-            cacheExpiresAt.value = Date.now() + AUTH_CACHE_TTL_MS;
+            lastValidatedAt.value = formatDateTime();
+            cacheExpiresAt.value = formatDateTime(Date.now() + AUTH_CACHE_TTL_MS);
         };
 
         /**
@@ -74,8 +82,8 @@ export const useAuthStore = defineStore(
             user.value = null;
             authStatus.value = "guest";
             initialized.value = true;
-            lastValidatedAt.value = Date.now();
-            cacheExpiresAt.value = Date.now() + AUTH_CACHE_TTL_MS;
+            lastValidatedAt.value = formatDateTime();
+            cacheExpiresAt.value = formatDateTime(Date.now() + AUTH_CACHE_TTL_MS);
         };
 
         /**
@@ -86,7 +94,7 @@ export const useAuthStore = defineStore(
             user.value = null;
             authStatus.value = "guest";
             initialized.value = true;
-            lastValidatedAt.value = Date.now();
+            lastValidatedAt.value = formatDateTime();
             cacheExpiresAt.value = null;
         };
 
@@ -95,11 +103,14 @@ export const useAuthStore = defineStore(
          * 过期后回到 unknown + 未初始化，促使下一次访问触发真实鉴权请求。
          */
         const ensureCacheFreshness = (): void => {
-            if (cacheExpiresAt.value !== null && cacheExpiresAt.value <= Date.now()) {
-                user.value = null;
-                authStatus.value = "unknown";
-                initialized.value = false;
-                cacheExpiresAt.value = null;
+            if (cacheExpiresAt.value !== null) {
+                const expiresAt = parseDateTime(cacheExpiresAt.value);
+                if (expiresAt === null || expiresAt <= Date.now()) {
+                    user.value = null;
+                    authStatus.value = "unknown";
+                    initialized.value = false;
+                    cacheExpiresAt.value = null;
+                }
             }
         };
 
@@ -111,7 +122,9 @@ export const useAuthStore = defineStore(
             if (lastValidatedAt.value === null) {
                 return true;
             }
-            return Date.now() - lastValidatedAt.value > AUTH_REVALIDATE_INTERVAL_MS;
+
+            const validatedAt = parseDateTime(lastValidatedAt.value);
+            return validatedAt === null || Date.now() - validatedAt > AUTH_REVALIDATE_INTERVAL_MS;
         };
 
         /**

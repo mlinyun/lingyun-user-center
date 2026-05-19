@@ -14,6 +14,7 @@ import {
 import { useAuthStore } from "@/stores/auth.ts";
 import { DOCUMENT_URL, GITHUB_URL } from "@/constants";
 import { FeatureCard, TechStackCard } from "@components/home";
+import { formatDateTime } from "@/utils/date";
 
 defineOptions({ name: "HomeView" });
 
@@ -21,21 +22,6 @@ const authStore = useAuthStore();
 
 // 获取当前登录用户信息
 const loginUser = authStore.user;
-
-/**
- * 格式化创建时间
- */
-const formatCreateTime = (createTime?: string | number): string => {
-    if (!createTime) return "-";
-    const date = new Date(createTime);
-    return date.toLocaleString("zh-CN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-};
 
 /**
  * 功能特性数据
@@ -85,7 +71,7 @@ const features = [
 const techStacks = [
     {
         title: "后端技术",
-        technologies: ["Spring Boot 3.5.6", "MyBatis-Plus", "MySQL", "Knife4j", "Hutool", "Lombok"],
+        technologies: ["Spring Boot 4", "MyBatis-Plus", "MySQL", "Knife4j", "Hutool", "Lombok"],
         color: "#52c41a",
     },
     {
@@ -95,7 +81,7 @@ const techStacks = [
     },
     {
         title: "工程化",
-        technologies: ["Maven", "Pnpm", "Spotless", "Checkstyle", "ESLint", "Prettier"],
+        technologies: ["Maven", "Pnpm", "Spotless", "Checkstyle", "ESLint", "Oxlint", "Oxfmt"],
         color: "#fa8c16",
     },
 ];
@@ -162,6 +148,12 @@ const techStacks = [
                                 </a-typography-text>
                             </div>
                             <div class="info-item">
+                                <a-typography-text type="secondary">用户ID</a-typography-text>
+                                <a-typography-text>
+                                    {{ loginUser?.id || "未设置" }}
+                                </a-typography-text>
+                            </div>
+                            <div class="info-item">
                                 <a-typography-text type="secondary">邮箱地址</a-typography-text>
                                 <a-typography-text>
                                     {{ loginUser?.userEmail || "未设置" }}
@@ -177,7 +169,7 @@ const techStacks = [
 
                         <div class="user-info-footer">
                             <a-typography-text class="create-time" type="secondary">
-                                账号创建时间：{{ formatCreateTime(loginUser?.createTime) }}
+                                账号创建时间：{{ formatDateTime(loginUser?.createTime) }}
                             </a-typography-text>
                         </div>
                     </a-card>
