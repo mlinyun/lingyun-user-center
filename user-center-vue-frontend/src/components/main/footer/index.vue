@@ -71,6 +71,7 @@ const footerLinks = [
     justify-content: center;
     width: 100%;
     padding: 12px 50px;
+    background: rgb(255 255 255 / 80%);
     border-top: 1px solid rgb(0 0 0 / 6%);
 }
 

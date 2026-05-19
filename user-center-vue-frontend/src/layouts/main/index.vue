@@ -44,11 +44,13 @@ defineOptions({ name: "MainLayout" });
     /* 减去顶部导航栏的高度 */
     height: calc(100vh - 64px);
     overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .content-wrapper {
-    height: calc(100vh - 64px - 69px);
-    padding: 32px;
+    min-height: calc(100vh - 64px - 69px);
+    padding: 24px;
+    background: rgb(255 255 255 / 80%);
     border-radius: 4px;
     box-shadow: 0 1px 4px rgb(0 21 41 / 8%);
 }

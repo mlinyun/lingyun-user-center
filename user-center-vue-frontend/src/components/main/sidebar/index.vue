@@ -2,7 +2,7 @@
 /**
  * 主布局侧边栏组件.
  */
-import { ref, h } from "vue";
+import { ref, h, computed } from "vue";
 import {
     MenuUnfoldOutlined,
     MenuFoldOutlined,
@@ -69,8 +69,6 @@ const menuItems = computed<MenuProps["items"]>(() => {
         });
     };
     processRoutes(routes);
-    // DEBUG: 输出生成的菜单项，验证顺序和内容是否正确
-    console.log("生成的菜单项:", items);
     return items;
 });
 
@@ -129,5 +127,13 @@ const handleMenuClick = ({ key }: { key: string }) => {
 
 .collapse-trigger:hover {
     background-color: rgb(0 0 0 / 4%);
+}
+
+:deep(.ant-menu-inline) {
+    border-inline-end: none !important;
+}
+
+:deep(.ant-menu-vertical) {
+    border-inline-end: none !important;
 }
 </style>

@@ -49,4 +49,11 @@ export const ROUTES = {
         hideInMenu: true,
         requiresAuth: false,
     },
+    NOT_FOUND_ERR: {
+        path: "/:pathMatch(.*)*",
+        name: "not-found",
+        title: "页面未找到",
+        hideInMenu: true,
+        requiresAuth: false,
+    },
 };

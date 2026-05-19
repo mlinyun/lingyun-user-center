@@ -23,6 +23,10 @@ const UserLogin = () => import("@views/auth/login/index.vue");
 // 用户注册页面
 const UserRegister = () => import("@views/auth/register/index.vue");
 
+// 异常页面
+// 404 Not Found 页面
+const NotFound = () => import("@views/exception/404/index.vue");
+
 export const routes: Array<RouteRecordRaw> = [
     // 主布局路由
     {
@@ -106,5 +110,16 @@ export const routes: Array<RouteRecordRaw> = [
                 },
             },
         ],
+    },
+    // 异常页面路由
+    {
+        path: ROUTES.NOT_FOUND_ERR.path,
+        name: ROUTES.NOT_FOUND_ERR.name,
+        component: NotFound,
+        meta: {
+            title: ROUTES.NOT_FOUND_ERR.title,
+            hideInMenu: ROUTES.NOT_FOUND_ERR.hideInMenu,
+            requiresAuth: ROUTES.NOT_FOUND_ERR.requiresAuth,
+        },
     },
 ];
