@@ -10,6 +10,4 @@ import type { NotificationArgsProps } from "ant-design-vue/es/notification";
 export interface MessageConfig extends NotificationArgsProps {
     /** 是否使用 Notification (默认 false) */
     useNotification?: boolean;
-    /** 通知标题 (仅 Notification 有效) */
-    title?: string;
 }

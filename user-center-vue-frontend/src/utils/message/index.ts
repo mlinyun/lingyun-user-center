@@ -12,11 +12,11 @@ export const messageUtils = {
      * @param msgConfig 消息配置选项
      */
     success: (msg: string, msgConfig?: MessageConfig): void => {
-        const { useNotification = false, title = "成功", duration, ...rest } = msgConfig || {};
+        const { useNotification = false, message: messageTitle, duration, ...rest } = msgConfig || {};
         // 如果配置项中 useNotification 为 true，则使用 Notification 组件进行提示
         if (useNotification) {
             notification.success({
-                message: title,
+                message: messageTitle,
                 description: msg,
                 duration: duration ?? 4.5,
                 ...rest,
@@ -36,10 +36,10 @@ export const messageUtils = {
      * @param msgConfig 消息配置选项
      */
     info: (msg: string, msgConfig?: MessageConfig): void => {
-        const { useNotification = false, title = "提示", duration, ...rest } = msgConfig || {};
+        const { useNotification = false, message: messageTitle, duration, ...rest } = msgConfig || {};
         if (useNotification) {
             notification.info({
-                message: title,
+                message: messageTitle,
                 description: msg,
                 duration: duration ?? 4.5,
                 ...rest,
@@ -58,10 +58,10 @@ export const messageUtils = {
      * @param msgConfig 消息配置选项
      */
     warning: (msg: string, msgConfig?: MessageConfig): void => {
-        const { useNotification = false, title = "警告", duration, ...rest } = msgConfig || {};
+        const { useNotification = false, message: messageTitle, duration, ...rest } = msgConfig || {};
         if (useNotification) {
             notification.warning({
-                message: title,
+                message: messageTitle,
                 description: msg,
                 duration: duration ?? 4.5,
                 ...rest,
@@ -80,10 +80,10 @@ export const messageUtils = {
      * @param msgConfig 消息配置选项
      */
     error: (msg: string, msgConfig?: MessageConfig): void => {
-        const { useNotification = false, title = "错误", duration, ...rest } = msgConfig || {};
+        const { useNotification = false, message: messageTitle, duration, ...rest } = msgConfig || {};
         if (useNotification) {
             notification.error({
-                message: title,
+                message: messageTitle,
                 description: msg,
                 duration: duration ?? 4.5,
                 ...rest,

@@ -2,7 +2,7 @@
 export const ROUTES = {
     // 首页
     HOME: {
-        path: "home",
+        path: "/home",
         name: "home",
         title: "首页",
         icon: "smile",
@@ -10,7 +10,7 @@ export const ROUTES = {
         requiresAuth: true,
     },
     PROFILES: {
-        path: "profiles",
+        path: "/profiles",
         name: "profiles",
         title: "个人中心",
         icon: "user",
@@ -19,7 +19,7 @@ export const ROUTES = {
     },
     // 账号设置
     SETTINGS: {
-        path: "settings",
+        path: "/settings",
         name: "settings",
         title: "账号设置",
         icon: "setting",
@@ -27,7 +27,7 @@ export const ROUTES = {
         requiresAuth: true,
     },
     MANAGE: {
-        path: "manage",
+        path: "/manage",
         name: "manage",
         title: "用户管理",
         icon: "crown",
@@ -36,14 +36,14 @@ export const ROUTES = {
         requiresAdmin: true,
     },
     LOGIN: {
-        path: "login",
+        path: "/auth/login",
         name: "login",
         title: "用户登录",
         hideInMenu: true,
         requiresAuth: false,
     },
     REGISTER: {
-        path: "register",
+        path: "/auth/register",
         name: "register",
         title: "用户注册",
         hideInMenu: true,

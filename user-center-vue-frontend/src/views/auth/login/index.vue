@@ -2,7 +2,7 @@
 /**
  * 用户登录页面.
  */
-import { ref } from "vue";
+import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { ROUTES } from "@/constants/routes.ts";
 import {
@@ -109,7 +109,10 @@ const createSubmitHandler =
             if (data.code === BusinessCode.SUCCESS && data.success) {
                 const userLoginVo = data.data;
                 authStore.markAuthenticated(userLoginVo);
-                void router.push({ name: ROUTES.HOME.name });
+                // 路由跳转到上次的页面或者首页
+                const queryRoute = router.currentRoute.value.query.redirect as string;
+                const redirectPath = queryRoute || ROUTES.HOME.path;
+                await router.push({ path: redirectPath });
             }
         } catch (error) {
             console.log(`登录异常：${error}`);

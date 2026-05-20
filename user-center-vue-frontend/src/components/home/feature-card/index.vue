@@ -2,6 +2,8 @@
 /**
  * 功能特性卡片组件
  */
+import type { Component } from "vue";
+
 defineOptions({ name: "FeatureCard" });
 
 defineProps<{

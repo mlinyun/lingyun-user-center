@@ -4,6 +4,7 @@ import { BProgress } from "@bprogress/core";
 import { useAuthStore } from "@/stores/auth";
 import { messageUtils } from "@/utils/message";
 import type { Api } from "@/types/api/typings";
+import { ROUTES } from "@/constants/routes.ts";
 
 /**
  * BProgress 进度条配置
@@ -30,11 +31,6 @@ const router = createRouter({
 
 const AUTH_ROUTE_PREFIX = "/auth";
 
-const ROUTE_PATH = {
-    HOME: "/",
-    LOGIN: "/auth/login",
-} as const;
-
 /**
  * 判断是否为认证相关路由（登录/注册等）.
  *
@@ -52,12 +48,12 @@ const isAuthRoute = (path: string): boolean => {
  */
 const getSafeAuthRedirect = (redirect: unknown): string => {
     if (typeof redirect !== "string" || redirect.trim() === "") {
-        return ROUTE_PATH.HOME;
+        return ROUTES.HOME.path;
     }
 
     // 只允许站内相对路径，避免把外部地址当作回跳目标。
     if (!redirect.startsWith("/") || redirect.startsWith("//")) {
-        return ROUTE_PATH.HOME;
+        return ROUTES.HOME.path;
     }
 
     // 禁止包含协议
@@ -65,12 +61,12 @@ const getSafeAuthRedirect = (redirect: unknown): string => {
         // URL 构造函数会抛出异常，如果 redirect 是一个相对路径而不是完整 URL
         const url = new URL(redirect, window.location.origin);
         if (url.origin !== window.location.origin) {
-            return ROUTE_PATH.HOME;
+            return ROUTES.HOME.path;
         }
         return `${url.pathname}${url.search}${url.hash}`;
     } catch (error) {
         console.log("Invalid redirect URL, defaulting to home:", error);
-        return ROUTE_PATH.HOME;
+        return ROUTES.HOME.path;
     }
 };
 
@@ -105,7 +101,7 @@ router.beforeEach(async (to) => {
 
             if (!authStore.isAuthenticated) {
                 return {
-                    path: ROUTE_PATH.LOGIN,
+                    name: ROUTES.LOGIN.name,
                     query: { redirect: to.fullPath },
                     replace: true,
                 };
@@ -117,7 +113,7 @@ router.beforeEach(async (to) => {
             if (requiredRole && authStore.user?.userRole !== requiredRole) {
                 messageUtils.error("当前账号无权访问该页面");
                 return {
-                    path: ROUTE_PATH.HOME,
+                    name: ROUTES.HOME.name,
                     replace: true,
                 };
             }
@@ -141,7 +137,7 @@ router.beforeEach(async (to) => {
 
         if (needAuth) {
             return {
-                path: ROUTE_PATH.LOGIN,
+                name: ROUTES.LOGIN.name,
                 query: {
                     redirect: to.fullPath,
                 },

@@ -54,14 +54,14 @@ const handleLogout = async () => {
  * 跳转到登录页
  */
 const goToLogin = async () => {
-    await router.push(ROUTES.LOGIN.path);
+    await router.push({ name: ROUTES.LOGIN.name });
 };
 
 /**
  * 跳转到注册页
  */
 const goToRegister = async () => {
-    await router.push(ROUTES.REGISTER.path);
+    await router.push({ name: ROUTES.REGISTER.name });
 };
 </script>
 

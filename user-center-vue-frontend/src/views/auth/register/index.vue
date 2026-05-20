@@ -109,7 +109,7 @@ const createSubmitHandler =
         try {
             const { data } = await apiFn(formData);
             if (data.code === BusinessCode.SUCCESS && data.success) {
-                void router.push({ name: ROUTES.LOGIN.name });
+                await router.push({ name: ROUTES.LOGIN.name });
             }
         } catch (error) {
             console.log(`注册异常：${error}`);

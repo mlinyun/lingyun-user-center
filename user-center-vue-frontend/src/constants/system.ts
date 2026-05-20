@@ -6,7 +6,7 @@
 export const SYSTEM_LOGO = "/logo.png";
 
 // 系统标题
-export const SYSTEM_TITLE = "凌云用户中心";
+export const SYSTEM_TITLE = "凌云用户中心系统";
 
 // 系统副标题
 export const SYSTEM_SUBTITLE = "企业核心的用户中心系统，基于 Spring Boot 4 + Vue 3 开发的全栈项目";

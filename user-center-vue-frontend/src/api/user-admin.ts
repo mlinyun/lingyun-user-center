@@ -14,7 +14,7 @@
  *
  * @module api/user-admin
  */
-import { http } from "@/utils/request";
+import { http } from "@/utils/request/http.ts";
 import type { AxiosResponse } from "axios";
 import type { Api } from "@/types/api/typings";
 

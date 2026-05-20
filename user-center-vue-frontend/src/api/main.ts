@@ -8,9 +8,20 @@
  *
  * @module api/main
  */
-import { http } from "@/utils/request";
+import { http } from "@/utils/request/http.ts";
 import type { AxiosResponse } from "axios";
 import type { Api } from "@/types/api/typings";
+import type { MessageConfig } from "@/types/message";
+
+/**
+ * 消息配置选项，定义了健康检查接口使用 Notification 组件显示消息
+ *
+ * 注意：message 是通知提醒标题，而不是通知提醒内容
+ */
+const messageConfig: MessageConfig = {
+    useNotification: true,
+    message: "健康检查",
+};
 
 /**
  * 健康检查.
@@ -24,5 +35,6 @@ export const healthCheck = (): Promise<AxiosResponse<Api.Main.HealthCheckRespons
     return http.get<Api.Main.HealthCheckResponseData>("/health", undefined, {
         showSuccessMessage: true,
         successMessage: "健康检查成功",
+        messageConfig: messageConfig,
     });
 };
