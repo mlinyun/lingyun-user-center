@@ -116,7 +116,6 @@ const createSubmitHandler =
             }
         } catch (error) {
             console.log(`登录异常：${error}`);
-            messageUtils.error("登录失败，请检查您的输入并重试!");
         } finally {
             submitting.value = false;
         }
@@ -144,7 +143,6 @@ const createSendCaptchaHandler =
             await sendCaptcha(captchaRequest);
         } catch (error) {
             console.error(`发送验证码异常：${error}`);
-            messageUtils.error("验证码发送失败，请稍后再试！");
         }
     };
 

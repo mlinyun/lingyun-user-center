@@ -113,7 +113,6 @@ const createSubmitHandler =
             }
         } catch (error) {
             console.log(`注册异常：${error}`);
-            messageUtils.error("注册失败，请稍后再试！");
         } finally {
             submitting.value = false;
         }
@@ -147,7 +146,6 @@ const createSendCaptchaHandler =
             await sendCaptcha(captchaRequest);
         } catch (error) {
             console.error(`发送验证码异常：${error}`);
-            messageUtils.error("验证码发送失败，请稍后再试！");
         }
     };
 
