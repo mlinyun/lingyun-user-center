@@ -21,15 +21,15 @@ export const getCurrentYear = (): number => {
  *
  * 将时间戳或日期字符串格式化为 `yyyy/MM/dd HH:mm:ss`（中文地区格式），
  *
- * @param value 时间戳或日期时间字符串，默认当前时间
+ * @param dateTime 时间戳或日期时间字符串，默认当前时间
  * @returns 可读的日期时间字符串
  */
-export const formatDateTime = (value?: Api.Common.DateTimeString | undefined): string => {
-    if (!value) {
-        return "";
+export const formatDateTime = (dateTime?: Api.Common.DateTimeString | number): string => {
+    if (!dateTime) {
+        return "-";
     }
     // 转换数字时间戳
-    const date = new Date(value);
+    const date = new Date(dateTime);
     return date.toLocaleString("zh-CN", {
         year: "numeric",
         month: "2-digit",

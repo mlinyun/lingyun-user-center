@@ -13,4 +13,9 @@ defineOptions({ name: "UserSettings" });
     </a-layout>
 </template>
 
-<style scoped></style>
+<style scoped>
+#user-settings {
+    height: 100%;
+    background: rgb(255 255 255 / 80%);
+}
+</style>

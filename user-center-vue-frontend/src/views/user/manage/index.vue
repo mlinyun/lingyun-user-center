@@ -13,4 +13,9 @@ defineOptions({ name: "UserManage" });
     </a-layout>
 </template>
 
-<style scoped></style>
+<style scoped>
+#user-manage {
+    height: 100%;
+    background: rgb(255 255 255 / 80%);
+}
+</style>

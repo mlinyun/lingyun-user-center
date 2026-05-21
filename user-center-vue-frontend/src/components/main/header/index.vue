@@ -85,7 +85,7 @@ const goToRegister = async () => {
                         <template #default>
                             <div class="user-info">
                                 <a-avatar :src="loginUser.userAvatar || DEFAULT_AVATAR" size="normal" />
-                                <span class="user-name">{{ loginUser.userName || "用户" }}</span>
+                                <span class="username">{{ loginUser.userName || "用户" }}</span>
                                 <DownOutlined class="dropdown-icon" />
                             </div>
                         </template>
@@ -202,7 +202,7 @@ const goToRegister = async () => {
     background-color: rgb(0 0 0 / 4%);
 }
 
-.user-name {
+.username {
     max-width: 100px;
     overflow: hidden;
     text-overflow: ellipsis;

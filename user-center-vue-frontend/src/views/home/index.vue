@@ -15,13 +15,14 @@ import { useAuthStore } from "@/stores/auth.ts";
 import { DOCUMENT_URL, GITHUB_URL } from "@/constants";
 import { FeatureCard, TechStackCard } from "@components/home";
 import { formatDateTime } from "@/utils/date";
+import { storeToRefs } from "pinia";
 
 defineOptions({ name: "HomeView" });
 
 const authStore = useAuthStore();
 
 // 获取当前登录用户信息
-const loginUser = authStore.user;
+const { user: loginUser } = storeToRefs(authStore);
 
 /**
  * 功能特性数据
