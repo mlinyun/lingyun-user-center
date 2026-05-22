@@ -1,5 +1,7 @@
 package com.mlinyun.usercenterbackend.constant.user;
 
+import java.util.List;
+
 /**
  * 用户常量类.
  *
@@ -93,29 +95,44 @@ public final class UserConstant {
     /**
      * 密码格式正则表达式（包含长度限制）.
      */
-    public static final String PWD_REGEX =
+    public static final String CREDENTIAL_REGEX =
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)" + "(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])"
                     + "[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{" + PWD_MIN + "," + PWD_MAX + "}$";
 
     /**
      * 密码不能为空提示信息.
      */
-    public static final String PWD_NOT_NULL_MSG = "密码不能为空";
+    public static final String CREDENTIAL_NOT_NULL_MSG = "密码不能为空";
 
     /**
      * 密码长度范围提示信息.
      */
-    public static final String PWD_LENGTH_MSG = "密码长度必须在" + PWD_MIN + "-" + PWD_MAX + "位之间";
+    public static final String CREDENTIAL_LENGTH_MSG = "密码长度必须在" + PWD_MIN + "-" + PWD_MAX + "位之间";
 
     /**
      * 密码格式要求提示信息.
      */
-    public static final String PWD_FORMAT_MSG = "登录密码必须包含大写字母、小写字母、数字和特殊字符";
+    public static final String CREDENTIAL_FORMAT_MSG = "登录密码必须包含大写字母、小写字母、数字和特殊字符";
 
     /**
      * 密码不一致提示信息.
      */
-    public static final String PWD_NOT_MATCH_MSG = "两次输入的密码不一致";
+    public static final String CREDENTIAL_NOT_MATCH_MSG = "两次输入的密码不一致";
+
+    /**
+     * 重置密码仅限本用户绑定手机号提示信息.
+     */
+    public static final String RESET_BOUND_PHONE_MSG = "只能使本用户绑定的手机号进行重置密码";
+
+    /**
+     * 重置密码仅限本用户绑定邮箱提示信息.
+     */
+    public static final String RESET_BOUND_EMAIL_MSG = "只能使本用户绑定的邮箱进行重置密码";
+
+    /**
+     * 密码重置失败提示信息.
+     */
+    public static final String RESET_CREDENTIAL_FAILED_MSG = "密码重置失败，请稍后再试";
     // endregion
 
     // region 用户昵称
@@ -159,7 +176,7 @@ public final class UserConstant {
     /**
      * 用户头像上传允许的文件扩展名.
      */
-    public static final String[] AVATAR_ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"};
+    public static final List<String> AVATAR_ALLOWED_EXTENSIONS = List.of("jpg", "jpeg", "png", "webp", "gif");
 
     /**
      * 用户头像文件不能为空提示信息.
@@ -270,11 +287,6 @@ public final class UserConstant {
      * 手机号未绑定任何账号提示信息.
      */
     public static final String PHONE_NOT_BOUND_MSG = "该手机号未绑定任何账号，请检查输入或注册新账号";
-
-    /**
-     * 只能重置当前登录用户绑定的手机号提示信息.
-     */
-    public static final String RESET_CURRENT_USER_PHONE_MSG = "只能重置当前登录用户绑定的手机号";
     // endregion
 
     // region 邮箱
@@ -299,14 +311,9 @@ public final class UserConstant {
     public static final String EMAIL_NOT_EXIST_MSG = "该邮箱未注册，请检查输入或注册新账号";
 
     /**
-     * 邮箱未绑定任何账号提示信息.
+     * 账号未绑定邮箱提示信息.
      */
-    public static final String EMAIL_NOT_BOUND_MSG = "该邮箱未绑定任何账号，请检查输入或注册新账号";
-
-    /**
-     * 只能重置当前登录用户绑定的邮箱提示信息.
-     */
-    public static final String RESET_CURRENT_USER_EMAIL_MSG = "只能重置当前登录用户绑定的邮箱";
+    public static final String EMAIL_NOT_BOUND_MSG = "该账号未绑定邮箱，请检查输入或注册新账号";
 
     /**
      * 邮箱相同提示信息.
@@ -335,15 +342,5 @@ public final class UserConstant {
      * 用户注册失败提示信息.
      */
     public static final String REGISTER_FAILED_MSG = "用户注册失败，请稍后再试";
-
-    /**
-     * 密码重置失败提示信息.
-     */
-    public static final String RESET_PWD_FAILED_MSG = "密码重置失败，请稍后再试";
-
-    /**
-     * 登录用户不能为空提示信息.
-     */
-    public static final String LOGIN_USER_NOT_NULL = "登录用户不能为空";
 
 }

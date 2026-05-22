@@ -54,7 +54,6 @@ import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -200,11 +199,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     private String coreRegister(String account, String email, String phone, String password, String checkPwd) {
         // 1. 校验两次密码一致
-        ThrowUtils.throwIf(!password.equals(checkPwd), ErrorCode.PARAMS_ERROR, UserConstant.PWD_NOT_MATCH_MSG);
+        ThrowUtils.throwIf(!password.equals(checkPwd), ErrorCode.PARAMS_ERROR, UserConstant.CREDENTIAL_NOT_MATCH_MSG);
 
         // 2. 校验密码强度（双重保险）
         boolean validStrong = PasswordUtils.isValidStrong(password);
-        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.PWD_FORMAT_MSG);
+        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.CREDENTIAL_FORMAT_MSG);
 
         // 3. 密码加密
         String encryptedPassword = PasswordUtils.encrypt(password);
@@ -419,12 +418,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         }
 
-        // 2. 获取当前登录用户（可能会抛出未登录异常）
-        User loginUser = this.getLoginUser(request);
-
-        // 4. 校验验证码（失败自动抛异常）
+        // 2. 校验验证码（失败自动抛异常）
         captchaService.verifyCaptchaOrThrow(CaptchaTypeEnum.EMAIL, CaptchaSceneEnum.BIND_CHANGE, userEmail,
                 captchaCode);
+
+        // 3. 获取当前登录用户（可能会抛出未登录异常）
+        User loginUser = this.getLoginUser(request);
+
+        // 4. 判断新邮箱与当前用户绑定的邮箱是否相同，如果相同则抛出异常
+        String loginUserEmail = loginUser.getUserEmail();
+        ThrowUtils.throwIf(CharSequenceUtil.equals(loginUserEmail, userEmail), ErrorCode.PARAMS_ERROR,
+                UserConstant.EMAIL_SAME_MSG);
 
         // 5. 判断该邮箱是否已被其他用户绑定
         checkUniqueAndThrow(UserFields.USER_EMAIL, userEmail, UserConstant.EMAIL_EXIST_MSG);
@@ -450,11 +454,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "必填参数不能为空");
         }
 
-        // 2. 获取当前登录用户（可能会抛出未登录异常）
+        // 2. 校验验证码（失败自动抛异常）
+        captchaService.verifyCaptchaOrThrow(CaptchaTypeEnum.SMS, CaptchaSceneEnum.BIND_CHANGE, userPhone, captchaCode);
+
+        // 3. 获取当前登录用户（可能会抛出未登录异常）
         User loginUser = this.getLoginUser(request);
 
-        // 4. 校验验证码（失败自动抛异常）
-        captchaService.verifyCaptchaOrThrow(CaptchaTypeEnum.SMS, CaptchaSceneEnum.BIND_CHANGE, userPhone, captchaCode);
+        // 4. 判断新手机号与当前用户绑定的手机号是否相同，如果相同则抛出异常
+        String loginUserPhone = loginUser.getUserPhone();
+        ThrowUtils.throwIf(CharSequenceUtil.equals(loginUserPhone, userPhone), ErrorCode.PARAMS_ERROR,
+                UserConstant.PHONE_SAME_MSG);
 
         // 5. 判断该手机号是否已被其他用户绑定
         checkUniqueAndThrow(UserFields.USER_PHONE, userPhone, UserConstant.PHONE_EXIST_MSG);
@@ -652,14 +661,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 5. 校验新密码是否符合要求
         // 校验密码强度（必须包含大写字母、小写字母、数字和特殊字符）（双重保险）
         boolean validStrong = PasswordUtils.isValidStrong(newPassword);
-        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.PWD_FORMAT_MSG);
+        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.CREDENTIAL_FORMAT_MSG);
 
         // 6. 校验旧密码是否正确
         boolean isPasswordMatch = PasswordUtils.verify(rawPassword, loginUser.getUserPassword());
         ThrowUtils.throwIf(!isPasswordMatch, ErrorCode.PARAMS_ERROR, "原始密码错误");
 
         // 7. 判断新密码和校验密码是否一致，同时不能与原始密码相同
-        ThrowUtils.throwIf(!newPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR, "新密码和校验密码不一致");
+        ThrowUtils.throwIf(!newPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR,
+                UserConstant.CREDENTIAL_NOT_MATCH_MSG);
         ThrowUtils.throwIf(rawPassword.equals(newPassword), ErrorCode.PARAMS_ERROR, "新密码不能与原始密码相同");
 
         // 8. 加密新密码
@@ -672,7 +682,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 修改用户密码后需要更新编辑时间
         updateUser.setEditTime(LocalDateTime.now());
         boolean updateResult = this.updateById(updateUser);
-        ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, "用户密码更新失败，数据库更新异常");
+        ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, UserConstant.RESET_CREDENTIAL_FAILED_MSG);
 
         // 10. 密码更新后应主动使已有会话失效（强制重新登录）
         this.userLogout(request);
@@ -700,19 +710,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "必填参数不能为空");
         }
 
-        // 2. 获取当前登录用户（可能会抛出未登录异常）
-        User loginUser = this.getLoginUser(request);
-        String loginUserEmail = loginUser.getUserEmail();
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(loginUserEmail), ErrorCode.PARAMS_ERROR,
-                UserConstant.EMAIL_NOT_BOUND_MSG);
-        ThrowUtils.throwIf(!loginUserEmail.equals(userEmail), ErrorCode.PARAMS_ERROR,
-                UserConstant.RESET_CURRENT_USER_EMAIL_MSG);
-
         // 2. 校验邮箱验证码
         captchaService.verifyCaptchaOrThrow(CaptchaTypeEnum.EMAIL, CaptchaSceneEnum.RESET_PWD, userEmail, captchaCode);
 
         // 3. 复用核心重置密码逻辑（校验密码、查询用户、检查用户状态、加密新密码、执行更新）
-        return coreResetPwd(loginUser, newPassword, checkPassword, request);
+        return coreResetPwd(CaptchaTypeEnum.EMAIL, userEmail, newPassword, checkPassword,
+                UserConstant.EMAIL_NOT_BOUND_MSG, UserConstant.RESET_BOUND_EMAIL_MSG, request);
     }
 
     /**
@@ -734,42 +737,55 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "必填参数不能为空");
         }
 
-        // 2. 获取当前登录用户（可能会抛出未登录异常）
-        User loginUser = this.getLoginUser(request);
-        String loginUserPhone = loginUser.getUserPhone();
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(loginUserPhone), ErrorCode.PARAMS_ERROR,
-                UserConstant.PHONE_NOT_BOUND_MSG);
-        ThrowUtils.throwIf(!loginUserPhone.equals(userPhone), ErrorCode.PARAMS_ERROR,
-                UserConstant.RESET_CURRENT_USER_PHONE_MSG);
-
-        // 3. 校验短信验证码
+        // 2. 校验短信验证码
         captchaService.verifyCaptchaOrThrow(CaptchaTypeEnum.SMS, CaptchaSceneEnum.RESET_PWD, userPhone, captchaCode);
 
-        // 4. 复用核心重置密码逻辑（校验密码、查询用户、检查用户状态、加密新密码、执行更新）
-        return coreResetPwd(loginUser, newPassword, checkPassword, request);
+        // 3. 复用核心重置密码逻辑
+        return coreResetPwd(CaptchaTypeEnum.SMS, userPhone, newPassword, checkPassword,
+                UserConstant.PHONE_NOT_BOUND_MSG, UserConstant.RESET_BOUND_PHONE_MSG, request);
     }
 
     /**
-     * 内部通用重置密码安全校验及落库流.
+     * 邮箱/手机号重置密码核心逻辑.
      *
-     * @param loginUser 当前登录用户信息
+     * @param type 验证码类型（邮箱或短信）
+     * @param field 用户的联系方式（邮箱地址或手机号）
      * @param newPassword 新密码
      * @param checkPassword 确认密码
+     * @param notBoundMsg 用户未绑定联系方式时的异常信息
+     * @param resetBySelfMsg 用户请求重置的联系方式与登录用户绑定的联系方式不匹配时的异常信息
+     * @param request HTTP 请求对象
      * @return 是否重置成功
      */
-    private boolean coreResetPwd(User loginUser, String newPassword, String checkPassword, HttpServletRequest request) {
-        // 1. 校验新密码和确认密码是否一致
-        ThrowUtils.throwIf(!newPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR, UserConstant.PWD_NOT_MATCH_MSG);
+    private boolean coreResetPwd(CaptchaTypeEnum type, String field, String newPassword, String checkPassword,
+            String notBoundMsg, String resetBySelfMsg, HttpServletRequest request) {
+        // 1. 获取当前登录用户（可能会抛出未登录异常）
+        User loginUser = this.getLoginUser(request);
 
-        // 2. 校验新密码强度（双重保险）
+        // 2. 根据验证码类型校验用户的联系方式是否符合要求（必须已绑定且与请求参数一致）
+        if (CaptchaTypeEnum.EMAIL.equals(type)) {
+            String loginUserEmail = loginUser.getUserEmail();
+            ThrowUtils.throwIf(ObjectUtil.isEmpty(loginUserEmail), ErrorCode.PARAMS_ERROR, notBoundMsg);
+            ThrowUtils.throwIf(!loginUserEmail.equals(field), ErrorCode.PARAMS_ERROR, resetBySelfMsg);
+        } else if (CaptchaTypeEnum.SMS.equals(type)) {
+            String loginUserPhone = loginUser.getUserPhone();
+            ThrowUtils.throwIf(ObjectUtil.isEmpty(loginUserPhone), ErrorCode.PARAMS_ERROR, notBoundMsg);
+            ThrowUtils.throwIf(!loginUserPhone.equals(field), ErrorCode.PARAMS_ERROR, resetBySelfMsg);
+        }
+
+        // 3.校验新密码和确认密码是否一致
+        ThrowUtils.throwIf(!newPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR,
+                UserConstant.CREDENTIAL_NOT_MATCH_MSG);
+
+        // 4. 校验新密码强度（双重保险）
         boolean validStrong = PasswordUtils.isValidStrong(newPassword);
-        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.PWD_FORMAT_MSG);
+        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.CREDENTIAL_FORMAT_MSG);
 
-        // 3. 判断用户是否被禁用
+        // 5. 判断用户是否被禁用
         boolean banned = UserStatusEnum.isBanned(loginUser.getUserStatus());
         ThrowUtils.throwIf(banned, ErrorCode.FORBIDDEN_ERROR, UserConstant.ACCOUNT_BANNED_MSG);
 
-        // 5. 加密并在数据库中执行密码更新
+        // 6. 加密并在数据库中执行密码更新
         String encryptedNewPassword = PasswordUtils.encrypt(newPassword);
         User updateUser = new User();
         updateUser.setId(loginUser.getId());
@@ -777,12 +793,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 修改用户密码后需要更新编辑时间
         updateUser.setEditTime(LocalDateTime.now());
         boolean updateResult = this.updateById(updateUser);
-        ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, "密码重置失败，数据库更新异常");
+        ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, UserConstant.RESET_CREDENTIAL_FAILED_MSG);
 
-        // 6. 密码更新后应主动使已有会话失效（强制重新登录）
+        // 7. 密码更新后应主动使已有会话失效（强制重新登录）
         this.userLogout(request);
 
-        // 7. 返回更新结果
+        // 8. 返回更新结果
         return true;
     }
 
@@ -804,8 +820,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 2. 校验文件扩展名
         String fileSuffix = FileUtil.getSuffix(file.getOriginalFilename()); // 获取文件扩展名（不带点）
         // 允许上传的文件扩展名列表（小写）
-        final List<String> allowedExtensions = Arrays.asList(UserConstant.AVATAR_ALLOWED_EXTENSIONS);
-        boolean extensionAllowed = allowedExtensions.contains(fileSuffix);
+        boolean extensionAllowed = UserConstant.AVATAR_ALLOWED_EXTENSIONS.contains(fileSuffix);
         ThrowUtils.throwIf(!extensionAllowed, ErrorCode.PARAMS_ERROR, UserConstant.AVATAR_FILE_TYPE_INVALID_MSG);
 
         // 3. 获取当前登录用户
@@ -915,9 +930,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 校验新密码是否符合要求
         // 校验密码强度（必须包含大写字母、小写字母、数字和特殊字符）（双重保险）
         boolean validStrong = PasswordUtils.isValidStrong(userPassword);
-        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.PWD_FORMAT_MSG);
+        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.CREDENTIAL_FORMAT_MSG);
         // 校验登录密码和校验密码是否一致
-        ThrowUtils.throwIf(!userPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR, UserConstant.PWD_NOT_MATCH_MSG);
+        ThrowUtils.throwIf(!userPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR,
+                UserConstant.CREDENTIAL_NOT_MATCH_MSG);
 
         // 2. 检查账号是否已存在
         this.checkUniqueAndThrow(UserFields.USER_ACCOUNT, userAccount, UserConstant.ACCOUNT_EXIST_MSG);
@@ -1138,7 +1154,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String newPassword = adminResetUserPwdRequest.getNewPassword();
         // 校验密码强度（必须包含大写字母、小写字母、数字和特殊字符）（双重保险）
         if (!PasswordUtils.isValidStrong(newPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, UserConstant.PWD_FORMAT_MSG);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, UserConstant.CREDENTIAL_FORMAT_MSG);
         }
 
         // 加密新密码
@@ -1149,7 +1165,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         updateUser.setId(user.getId());
         updateUser.setUserPassword(encryptedNewPassword);
         boolean updateResult = this.updateById(updateUser);
-        ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, UserConstant.RESET_PWD_FAILED_MSG);
+        ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, UserConstant.RESET_CREDENTIAL_FAILED_MSG);
 
         // 返回重置结果
         return true;

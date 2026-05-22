@@ -50,18 +50,18 @@ public class UserPhoneResetPwdRequest implements Serializable {
      * 新的密码.
      */
     @Schema(description = "新的密码", example = "Password..1234", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = UserConstant.PWD_NOT_NULL_MSG)
-    @Size(min = UserConstant.PWD_MIN, max = UserConstant.PWD_MAX, message = UserConstant.PWD_LENGTH_MSG)
-    @Pattern(regexp = UserConstant.PWD_REGEX, message = UserConstant.PWD_FORMAT_MSG)
+    @NotBlank(message = UserConstant.CREDENTIAL_NOT_NULL_MSG)
+    @Size(min = UserConstant.PWD_MIN, max = UserConstant.PWD_MAX, message = UserConstant.CREDENTIAL_LENGTH_MSG)
+    @Pattern(regexp = UserConstant.CREDENTIAL_REGEX, message = UserConstant.CREDENTIAL_FORMAT_MSG)
     private String newPassword;
 
     /**
      * 校验密码.
      */
     @Schema(description = "校验密码", example = "Password..1234", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = UserConstant.PWD_NOT_NULL_MSG)
-    @Size(min = UserConstant.PWD_MIN, max = UserConstant.PWD_MAX, message = UserConstant.PWD_LENGTH_MSG)
-    @Pattern(regexp = UserConstant.PWD_REGEX, message = UserConstant.PWD_FORMAT_MSG)
+    @NotBlank(message = UserConstant.CREDENTIAL_NOT_NULL_MSG)
+    @Size(min = UserConstant.PWD_MIN, max = UserConstant.PWD_MAX, message = UserConstant.CREDENTIAL_LENGTH_MSG)
+    @Pattern(regexp = UserConstant.CREDENTIAL_REGEX, message = UserConstant.CREDENTIAL_FORMAT_MSG)
     private String checkPassword;
 
 }
