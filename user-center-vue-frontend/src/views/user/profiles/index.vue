@@ -18,8 +18,16 @@ const { user: loginUser } = storeToRefs(authStore);
 
 onMounted(async () => {
     // 如果没有用户信息，强制刷新当前用户信息
-    if (loginUser) {
-        await authStore.refreshCurrentUser();
+    if (!loginUser.value) {
+        loading.value = true;
+        try {
+            await authStore.refreshCurrentUser();
+        } catch (error) {
+            loading.value = false;
+            console.log("刷新用户信息失败:", error);
+        } finally {
+            loading.value = false;
+        }
     }
 });
 

@@ -4,7 +4,7 @@ export const ROUTES = {
     HOME: {
         path: "/home",
         name: "home",
-        title: "首页",
+        title: "系统首页",
         icon: "smile",
         hideInMenu: false,
         requiresAuth: true,

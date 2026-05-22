@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onBeforeUnmount, computed } from "vue";
 import { useRouter } from "vue-router";
 import { userRegister, userEmailRegister, userPhoneRegister } from "@/api/user";
-import { sendCaptcha } from "@/api/captcha";
 import {
     UserOutlined,
     LockOutlined,
@@ -15,7 +14,9 @@ import type { Rule } from "ant-design-vue/es/form";
 import { ROUTES } from "@/constants/routes.ts";
 import type { AxiosResponse } from "axios";
 import { BusinessCode, CODE_REGEX, PHONE_REGEX, PWD_REGEX } from "@/constants";
-import { messageUtils } from "@/utils/message";
+import { createSendCaptchaHandler } from "@/utils/captcha/send-captcha.ts";
+import type { FormInstance } from "ant-design-vue";
+import { useCaptchaCooldown } from "@/utils/captcha/captcha-cooldown.ts";
 
 /**
  * 用户注册页面.
@@ -23,16 +24,15 @@ import { messageUtils } from "@/utils/message";
 defineOptions({ name: "UserRegister" });
 
 const router = useRouter();
-// 当前激活的注册方式
-const activeKey = ref("account");
-// 提交状态
-const submitting = ref(false);
 
 const labelCol = { span: 0 };
 const wrapperCol = { span: 24 };
 
+// 当前激活的注册方式
+const activeKey = ref("account");
+
 // 账号注册表单引用
-const accountFormRef = ref();
+const accountFormRef = ref<FormInstance>();
 // 账号注册表单数据
 const accountForm = reactive<Api.User.UserRegisterRequest>({
     userAccount: "",
@@ -41,7 +41,7 @@ const accountForm = reactive<Api.User.UserRegisterRequest>({
 });
 
 // 邮箱注册表单引用
-const emailFormRef = ref();
+const emailFormRef = ref<FormInstance>();
 // 邮箱注册表单数据
 const emailForm = reactive<Api.User.UserEmailRegisterRequest>({
     userEmail: "",
@@ -51,13 +51,32 @@ const emailForm = reactive<Api.User.UserEmailRegisterRequest>({
 });
 
 // 手机号注册表单引用
-const phoneFormRef = ref();
+const phoneFormRef = ref<FormInstance>();
 // 手机号注册表单数据
 const phoneForm = reactive<Api.User.UserPhoneRegisterRequest>({
     userPhone: "",
     captchaCode: "",
     userPassword: "",
     checkPassword: "",
+});
+
+type SubmitState = {
+    accountBtn: boolean;
+    emailBtn: boolean;
+    phoneBtn: boolean;
+};
+
+// 提交按钮状态
+const submitting = reactive<SubmitState>({
+    accountBtn: false,
+    emailBtn: false,
+    phoneBtn: false,
+});
+
+// 验证码发送状态
+const sendingCaptcha = reactive({
+    emailCaptcha: false,
+    phoneCaptcha: false,
 });
 
 // 表单验证规则
@@ -103,9 +122,14 @@ const FormRules: Record<string, Rule[]> = {
 type RegisterApiFunction<TRequest> = (data: TRequest) => Promise<AxiosResponse<Api.User.UserRegisterResponse>>;
 
 const createSubmitHandler =
-    <TRequest>(apiFn: RegisterApiFunction<TRequest>, formData: TRequest) =>
+    <TRequest>(
+        apiFn: RegisterApiFunction<TRequest>,
+        formData: TRequest,
+        submitState: SubmitState,
+        submitKey: keyof SubmitState
+    ) =>
     async () => {
-        submitting.value = true;
+        submitState[submitKey] = true;
         try {
             const { data } = await apiFn(formData);
             if (data.code === BusinessCode.SUCCESS && data.success) {
@@ -114,44 +138,82 @@ const createSubmitHandler =
         } catch (error) {
             console.log(`注册异常：${error}`);
         } finally {
-            submitting.value = false;
+            submitState[submitKey] = false;
         }
     };
 
-const handleAccountSubmit = createSubmitHandler(userRegister, accountForm);
-const handleEmailSubmit = () => {
+/**
+ * 处理账号注册提交
+ */
+const handleAccountSubmit = async () => {
+    await accountFormRef.value?.validate();
+    await createSubmitHandler(userRegister, accountForm, submitting, "accountBtn")();
+};
+
+/**
+ * 处理邮箱注册提交
+ */
+const handleEmailSubmit = async () => {
     emailForm.checkPassword = emailForm.userPassword;
-    createSubmitHandler(userEmailRegister, emailForm)();
+    // 表单校验
+    await emailFormRef.value?.validate();
+    await createSubmitHandler(userEmailRegister, emailForm, submitting, "emailBtn")();
 };
-const handlePhoneSubmit = () => {
+
+/**
+ * 处理手机号注册提交
+ */
+const handlePhoneSubmit = async () => {
     phoneForm.checkPassword = phoneForm.userPassword;
-    createSubmitHandler(userPhoneRegister, phoneForm)();
+    await phoneFormRef.value?.validate();
+    await createSubmitHandler(userPhoneRegister, phoneForm, submitting, "phoneBtn")();
 };
 
-type CaptchaType = Api.Captcha.SendCaptchaRequest["type"];
+// 邮箱验证码冷却机制实例
+const emailCaptchaCooldown = useCaptchaCooldown();
 
-const createSendCaptchaHandler =
-    (type: CaptchaType, getTarget: () => string, emptyWarning: string) => async (): Promise<void> => {
-        const target = getTarget();
-        if (!target) {
-            messageUtils.warning(emptyWarning);
-            return;
-        }
-        try {
-            const captchaRequest: Api.Captcha.SendCaptchaRequest = {
-                type,
-                scene: "REGISTER",
-                target,
-            };
-            await sendCaptcha(captchaRequest);
-        } catch (error) {
-            console.error(`发送验证码异常：${error}`);
-        }
-    };
+// 手机号验证码冷却机制实例
+const phoneCaptchaCooldown = useCaptchaCooldown();
 
-const sendEmailCaptcha = createSendCaptchaHandler("EMAIL", () => emailForm.userEmail, "请输入邮箱地址以获取验证码");
+// 计算属性，获取邮箱验证码冷却倒计时
+const emailCaptchaCountdown = computed(() => emailCaptchaCooldown.countdown.value);
 
-const sendPhoneCaptcha = createSendCaptchaHandler("SMS", () => phoneForm.userPhone, "请输入手机号以获取验证码");
+// 计算属性，获取手机号验证码冷却倒计时
+const phoneCaptchaCountdown = computed(() => phoneCaptchaCooldown.countdown.value);
+
+/**
+ * 发送邮箱验证码
+ */
+const sendEmailCaptcha = async () => {
+    sendingCaptcha.emailCaptcha = true;
+    createSendCaptchaHandler("EMAIL", "REGISTER", () => emailForm.userEmail, "请输入邮箱地址以获取验证码")()
+        .then(() => {
+            emailCaptchaCooldown.start();
+        })
+        .finally(() => {
+            sendingCaptcha.emailCaptcha = false;
+        });
+};
+
+/**
+ * 发送手机号验证码
+ */
+const sendPhoneCaptcha = async () => {
+    sendingCaptcha.phoneCaptcha = true;
+    createSendCaptchaHandler("SMS", "REGISTER", () => phoneForm.userPhone, "请输入手机号以获取验证码")()
+        .then(() => {
+            phoneCaptchaCooldown.start();
+        })
+        .finally(() => {
+            sendingCaptcha.phoneCaptcha = false;
+        });
+};
+
+// 组件卸载前清除验证码冷却定时器，避免内存泄漏
+onBeforeUnmount(() => {
+    emailCaptchaCooldown.start();
+    phoneCaptchaCooldown.start();
+});
 </script>
 
 <template>
@@ -174,7 +236,12 @@ const sendPhoneCaptcha = createSendCaptchaHandler("SMS", () => phoneForm.userPho
                         :wrapper-col="wrapperCol"
                     >
                         <a-form-item name="userAccount" :rules="FormRules.userAccount">
-                            <a-input v-model:value="accountForm.userAccount" size="large" placeholder="登录账号">
+                            <a-input
+                                v-model:value="accountForm.userAccount"
+                                size="large"
+                                placeholder="请输入登录账号"
+                                allow-clear
+                            >
                                 <template #prefix><UserOutlined /></template>
                             </a-input>
                         </a-form-item>
@@ -182,7 +249,8 @@ const sendPhoneCaptcha = createSendCaptchaHandler("SMS", () => phoneForm.userPho
                             <a-input-password
                                 v-model:value="accountForm.userPassword"
                                 size="large"
-                                placeholder="登录密码"
+                                placeholder="请输入登录密码"
+                                allow-clear
                             >
                                 <template #prefix><LockOutlined /></template>
                             </a-input-password>
@@ -191,13 +259,20 @@ const sendPhoneCaptcha = createSendCaptchaHandler("SMS", () => phoneForm.userPho
                             <a-input-password
                                 v-model:value="accountForm.checkPassword"
                                 size="large"
-                                placeholder="确认密码"
+                                placeholder="请输入确认密码"
+                                allow-clear
                             >
                                 <template #prefix><LockOutlined /></template>
                             </a-input-password>
                         </a-form-item>
                         <a-form-item>
-                            <a-button type="primary" html-type="submit" size="large" block :loading="submitting">
+                            <a-button
+                                type="primary"
+                                html-type="submit"
+                                size="large"
+                                block
+                                :loading="submitting.accountBtn"
+                            >
                                 注册
                             </a-button>
                         </a-form-item>
@@ -214,25 +289,53 @@ const sendPhoneCaptcha = createSendCaptchaHandler("SMS", () => phoneForm.userPho
                         :wrapper-col="wrapperCol"
                     >
                         <a-form-item name="userEmail" :rules="FormRules.userEmail">
-                            <a-input v-model:value="emailForm.userEmail" size="large" placeholder="邮箱地址">
+                            <a-input
+                                v-model:value="emailForm.userEmail"
+                                size="large"
+                                placeholder="请输入邮箱地址"
+                                allow-clear
+                            >
                                 <template #prefix><MailOutlined /></template>
                             </a-input>
                         </a-form-item>
                         <a-form-item name="captchaCode" :rules="FormRules.captchaCode">
                             <div class="captcha-wrapper">
-                                <a-input v-model:value="emailForm.captchaCode" size="large" placeholder="验证码">
+                                <a-input
+                                    v-model:value="emailForm.captchaCode"
+                                    size="large"
+                                    placeholder="请输入验证码"
+                                    allow-clear
+                                >
                                     <template #prefix><SafetyCertificateOutlined /></template>
                                 </a-input>
-                                <a-button size="large" @click="sendEmailCaptcha">获取验证码</a-button>
+                                <a-button
+                                    size="large"
+                                    :disabled="emailCaptchaCountdown > 0"
+                                    :loading="sendingCaptcha.emailCaptcha"
+                                    @click="sendEmailCaptcha"
+                                >
+                                    {{ emailCaptchaCountdown > 0 ? `${emailCaptchaCountdown}秒后重试` : "获取验证码" }}
+                                </a-button>
                             </div>
                         </a-form-item>
                         <a-form-item name="userPassword" :rules="FormRules.userPassword">
-                            <a-input-password v-model:value="emailForm.userPassword" size="large" placeholder="密码">
+                            <a-input-password
+                                v-model:value="emailForm.userPassword"
+                                size="large"
+                                placeholder="请输入账号密码"
+                                allow-clear
+                            >
                                 <template #prefix><LockOutlined /></template>
                             </a-input-password>
                         </a-form-item>
                         <a-form-item>
-                            <a-button type="primary" html-type="submit" size="large" block :loading="submitting">
+                            <a-button
+                                type="primary"
+                                html-type="submit"
+                                size="large"
+                                block
+                                :loading="submitting.emailBtn"
+                            >
                                 注册
                             </a-button>
                         </a-form-item>
@@ -249,25 +352,53 @@ const sendPhoneCaptcha = createSendCaptchaHandler("SMS", () => phoneForm.userPho
                         :wrapper-col="wrapperCol"
                     >
                         <a-form-item name="userPhone" :rules="FormRules.userPhone">
-                            <a-input v-model:value="phoneForm.userPhone" size="large" placeholder="手机号">
+                            <a-input
+                                v-model:value="phoneForm.userPhone"
+                                size="large"
+                                placeholder="请输入手机号"
+                                allow-clear
+                            >
                                 <template #prefix><MobileOutlined /></template>
                             </a-input>
                         </a-form-item>
                         <a-form-item name="captchaCode" :rules="FormRules.captchaCode">
                             <div class="captcha-wrapper">
-                                <a-input v-model:value="phoneForm.captchaCode" size="large" placeholder="验证码">
+                                <a-input
+                                    v-model:value="phoneForm.captchaCode"
+                                    size="large"
+                                    placeholder="请输入验证码"
+                                    allow-clear
+                                >
                                     <template #prefix><SafetyCertificateOutlined /></template>
                                 </a-input>
-                                <a-button size="large" @click="sendPhoneCaptcha">获取验证码</a-button>
+                                <a-button
+                                    size="large"
+                                    :disabled="phoneCaptchaCountdown > 0"
+                                    :loading="sendingCaptcha.phoneCaptcha"
+                                    @click="sendPhoneCaptcha"
+                                >
+                                    {{ phoneCaptchaCountdown > 0 ? `${phoneCaptchaCountdown}秒后重试` : "获取验证码" }}
+                                </a-button>
                             </div>
                         </a-form-item>
                         <a-form-item name="userPassword" :rules="FormRules.userPassword">
-                            <a-input-password v-model:value="phoneForm.userPassword" size="large" placeholder="密码">
+                            <a-input-password
+                                v-model:value="phoneForm.userPassword"
+                                size="large"
+                                placeholder="请输入账号密码"
+                                allow-clear
+                            >
                                 <template #prefix><LockOutlined /></template>
                             </a-input-password>
                         </a-form-item>
                         <a-form-item>
-                            <a-button type="primary" html-type="submit" size="large" block :loading="submitting">
+                            <a-button
+                                type="primary"
+                                html-type="submit"
+                                size="large"
+                                block
+                                :loading="submitting.phoneBtn"
+                            >
                                 注册
                             </a-button>
                         </a-form-item>
@@ -287,7 +418,7 @@ const sendPhoneCaptcha = createSendCaptchaHandler("SMS", () => phoneForm.userPho
 }
 
 .register-card {
-    min-width: 400px;
+    min-width: 420px;
     box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
 

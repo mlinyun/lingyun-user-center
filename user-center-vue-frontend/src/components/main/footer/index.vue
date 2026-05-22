@@ -3,7 +3,7 @@
  * 主布局页脚组件.
  */
 import { getCurrentYear } from "@/utils/date";
-import { CONTACT_EMAIL, DOCUMENT_URL, GITHUB_URL } from "@/constants";
+import { CONTACT_EMAIL, DOCUMENT_URL, GITHUB_URL, MY_GITHUB_URL } from "@/constants";
 import { GithubOutlined, GlobalOutlined, MailOutlined } from "@ant-design/icons-vue";
 
 defineOptions({ name: "MainFooter" });
@@ -52,7 +52,9 @@ const footerLinks = [
         <div class="footer-copyright">
             <span>
                 Copyright © {{ currentYear }}
-                <a :href="GITHUB_URL" class="author-link" rel="noopener noreferrer" target="_blank"> 凌云 (mlinyun) </a>
+                <a :href="MY_GITHUB_URL" class="author-link" rel="noopener noreferrer" target="_blank">
+                    凌云 (mlinyun)
+                </a>
                 All Rights Reserved.
             </span>
             <a-divider :style="{ margin: '0 8px' }" type="vertical" />

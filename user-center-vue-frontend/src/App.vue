@@ -4,7 +4,7 @@ import zhCN from "ant-design-vue/es/locale/zh_CN";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import { useAuthStore } from "@/stores/auth.ts";
-import { onMounted } from "vue";
+import { onBeforeUnmount, onMounted } from "vue";
 
 // 设置 Ant Design Vue 的语言环境为中文
 dayjs.locale("zh-cn");
@@ -12,8 +12,13 @@ dayjs.locale("zh-cn");
 const locale = zhCN;
 
 const authStore = useAuthStore();
+// 组件挂载时启动会话心跳机制
 onMounted(() => {
     authStore.startSessionHeartbeat();
+});
+// 组件卸载时停止会话心跳机制
+onBeforeUnmount(() => {
+    authStore.stopSessionHeartbeat();
 });
 </script>
 

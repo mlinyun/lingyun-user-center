@@ -3,6 +3,7 @@
  * 主布局顶部导航栏组件.
  */
 import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 import { SYSTEM_LOGO, SYSTEM_TITLE, GITHUB_URL, DEFAULT_AVATAR } from "@/constants";
 import { DownOutlined, GithubOutlined, LogoutOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons-vue";
 import { useAuthStore } from "@/stores/auth.ts";
@@ -13,8 +14,8 @@ defineOptions({ name: "MainHeader" });
 const router = useRouter();
 const authStore = useAuthStore();
 
-// 获取当前登录用户信息
-const loginUser = authStore.user;
+// storeToRefs 解构后仍保持响应性
+const { user: loginUser } = storeToRefs(authStore);
 
 /**
  * 处理用户菜单点击事件
