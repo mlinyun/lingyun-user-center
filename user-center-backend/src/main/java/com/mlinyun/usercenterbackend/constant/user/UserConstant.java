@@ -270,6 +270,11 @@ public final class UserConstant {
      * 手机号未绑定任何账号提示信息.
      */
     public static final String PHONE_NOT_BOUND_MSG = "该手机号未绑定任何账号，请检查输入或注册新账号";
+
+    /**
+     * 只能重置当前登录用户绑定的手机号提示信息.
+     */
+    public static final String RESET_CURRENT_USER_PHONE_MSG = "只能重置当前登录用户绑定的手机号";
     // endregion
 
     // region 邮箱
@@ -297,6 +302,11 @@ public final class UserConstant {
      * 邮箱未绑定任何账号提示信息.
      */
     public static final String EMAIL_NOT_BOUND_MSG = "该邮箱未绑定任何账号，请检查输入或注册新账号";
+
+    /**
+     * 只能重置当前登录用户绑定的邮箱提示信息.
+     */
+    public static final String RESET_CURRENT_USER_EMAIL_MSG = "只能重置当前登录用户绑定的邮箱";
 
     /**
      * 邮箱相同提示信息.

@@ -700,12 +700,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "必填参数不能为空");
         }
 
+        // 2. 获取当前登录用户（可能会抛出未登录异常）
+        User loginUser = this.getLoginUser(request);
+        String loginUserEmail = loginUser.getUserEmail();
+        ThrowUtils.throwIf(ObjectUtil.isEmpty(loginUserEmail), ErrorCode.PARAMS_ERROR,
+                UserConstant.EMAIL_NOT_BOUND_MSG);
+        ThrowUtils.throwIf(!loginUserEmail.equals(userEmail), ErrorCode.PARAMS_ERROR,
+                UserConstant.RESET_CURRENT_USER_EMAIL_MSG);
+
         // 2. 校验邮箱验证码
         captchaService.verifyCaptchaOrThrow(CaptchaTypeEnum.EMAIL, CaptchaSceneEnum.RESET_PWD, userEmail, captchaCode);
 
         // 3. 复用核心重置密码逻辑（校验密码、查询用户、检查用户状态、加密新密码、执行更新）
-        return coreResetPwd(UserFields.USER_EMAIL, userEmail, UserConstant.EMAIL_NOT_BOUND_MSG, newPassword,
-                checkPassword, request);
+        return coreResetPwd(loginUser, newPassword, checkPassword, request);
     }
 
     /**
@@ -727,12 +734,56 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "必填参数不能为空");
         }
 
+        // 2. 获取当前登录用户（可能会抛出未登录异常）
+        User loginUser = this.getLoginUser(request);
+        String loginUserPhone = loginUser.getUserPhone();
+        ThrowUtils.throwIf(ObjectUtil.isEmpty(loginUserPhone), ErrorCode.PARAMS_ERROR,
+                UserConstant.PHONE_NOT_BOUND_MSG);
+        ThrowUtils.throwIf(!loginUserPhone.equals(userPhone), ErrorCode.PARAMS_ERROR,
+                UserConstant.RESET_CURRENT_USER_PHONE_MSG);
+
         // 3. 校验短信验证码
         captchaService.verifyCaptchaOrThrow(CaptchaTypeEnum.SMS, CaptchaSceneEnum.RESET_PWD, userPhone, captchaCode);
 
         // 4. 复用核心重置密码逻辑（校验密码、查询用户、检查用户状态、加密新密码、执行更新）
-        return coreResetPwd(UserFields.USER_PHONE, userPhone, UserConstant.PHONE_NOT_BOUND_MSG, newPassword,
-                checkPassword, request);
+        return coreResetPwd(loginUser, newPassword, checkPassword, request);
+    }
+
+    /**
+     * 内部通用重置密码安全校验及落库流.
+     *
+     * @param loginUser 当前登录用户信息
+     * @param newPassword 新密码
+     * @param checkPassword 确认密码
+     * @return 是否重置成功
+     */
+    private boolean coreResetPwd(User loginUser, String newPassword, String checkPassword, HttpServletRequest request) {
+        // 1. 校验新密码和确认密码是否一致
+        ThrowUtils.throwIf(!newPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR, UserConstant.PWD_NOT_MATCH_MSG);
+
+        // 2. 校验新密码强度（双重保险）
+        boolean validStrong = PasswordUtils.isValidStrong(newPassword);
+        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.PWD_FORMAT_MSG);
+
+        // 3. 判断用户是否被禁用
+        boolean banned = UserStatusEnum.isBanned(loginUser.getUserStatus());
+        ThrowUtils.throwIf(banned, ErrorCode.FORBIDDEN_ERROR, UserConstant.ACCOUNT_BANNED_MSG);
+
+        // 5. 加密并在数据库中执行密码更新
+        String encryptedNewPassword = PasswordUtils.encrypt(newPassword);
+        User updateUser = new User();
+        updateUser.setId(loginUser.getId());
+        updateUser.setUserPassword(encryptedNewPassword);
+        // 修改用户密码后需要更新编辑时间
+        updateUser.setEditTime(LocalDateTime.now());
+        boolean updateResult = this.updateById(updateUser);
+        ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, "密码重置失败，数据库更新异常");
+
+        // 6. 密码更新后应主动使已有会话失效（强制重新登录）
+        this.userLogout(request);
+
+        // 7. 返回更新结果
+        return true;
     }
 
     /**
@@ -839,49 +890,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         } catch (Exception e) {
             log.error("临时文件删除失败，文件路径 = {}, 错误信息：{}", file.getAbsolutePath(), e.getMessage());
         }
-    }
-
-    /**
-     * 内部通用重置密码安全校验及落库流.
-     *
-     * @param field 查询列名
-     * @param value 查询值
-     * @param notFoundMsg 未查询到对应的用户的报错提示
-     * @param newPassword 新密码
-     * @param checkPassword 确认密码
-     * @return 是否重置成功
-     */
-    private boolean coreResetPwd(String field, String value, String notFoundMsg, String newPassword,
-            String checkPassword, HttpServletRequest request) {
-        // 1. 校验新密码和确认密码是否一致
-        ThrowUtils.throwIf(!newPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR, UserConstant.PWD_NOT_MATCH_MSG);
-
-        // 2. 校验新密码强度（双重保险）
-        boolean validStrong = PasswordUtils.isValidStrong(newPassword);
-        ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.PWD_FORMAT_MSG);
-
-        // 3. 查询用户
-        User user = getUserByFieldAndThrow(field, value, notFoundMsg);
-
-        // 4. 判断用户是否被禁用
-        boolean banned = UserStatusEnum.isBanned(user.getUserStatus());
-        ThrowUtils.throwIf(banned, ErrorCode.FORBIDDEN_ERROR, UserConstant.ACCOUNT_BANNED_MSG);
-
-        // 5. 加密并在数据库中执行密码更新
-        String encryptedNewPassword = PasswordUtils.encrypt(newPassword);
-        User updateUser = new User();
-        updateUser.setId(user.getId());
-        updateUser.setUserPassword(encryptedNewPassword);
-        // 修改用户密码后需要更新编辑时间
-        updateUser.setEditTime(LocalDateTime.now());
-        boolean updateResult = this.updateById(updateUser);
-        ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, "密码重置失败，数据库更新异常");
-
-        // 6. 密码更新后应主动使已有会话失效（强制重新登录）
-        this.userLogout(request);
-
-        // 7. 返回更新结果
-        return true;
     }
     // endregion
 
