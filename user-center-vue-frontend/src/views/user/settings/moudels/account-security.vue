@@ -5,15 +5,14 @@
 import { CodeOutlined, MailOutlined, MobileOutlined, SafetyOutlined } from "@ant-design/icons-vue";
 import { BusinessCode, CODE_REGEX, PHONE_REGEX } from "@/constants";
 import type { Rule } from "ant-design-vue/es/form";
-import { reactive, ref, computed, watch, onBeforeUnmount } from "vue";
+import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "ant-design-vue";
 import type { Api } from "@/types/api/typings";
-import { useCaptchaCooldown } from "@/utils/captcha/captcha-cooldown.ts";
 import { useAuthStore } from "@/stores/auth.ts";
 import { storeToRefs } from "pinia";
-import { createSendCaptchaHandler } from "@/utils/captcha/send-captcha.ts";
 import { formDataValidate } from "@/utils/form/form-data-validate.ts";
 import { userBindEmail, userBindPhone } from "@/api/user.ts";
+import { useCaptchaSender } from "@/composable/send-captcha.ts";
 
 defineOptions({ name: "AccountSecurity" });
 
@@ -62,51 +61,21 @@ const submitting = reactive({
     bindPhoneBtn: false,
 });
 
-// 验证码发送状态
-const sendingCaptcha = reactive({
-    emailCaptcha: false,
-    phoneCaptcha: false,
-});
+// 邮箱验证码发送器实例
+const emailCaptchaSender = useCaptchaSender(
+    "EMAIL",
+    "BIND_CHANGE",
+    () => bindEmailForm.userEmail,
+    "请输入邮箱地址以获取验证码"
+);
 
-// 邮箱验证码冷却机制实例
-const bindEmailCooldown = useCaptchaCooldown();
-
-// 手机号验证码冷却机制实例
-const bindPhoneCooldown = useCaptchaCooldown();
-
-// 计算属性，获取邮箱验证码冷却倒计时
-const bindEmailCountdown = computed(() => bindEmailCooldown.countdown.value);
-
-// 计算属性，获取手机号验证码冷却倒计时
-const bindPhoneCountdown = computed(() => bindPhoneCooldown.countdown.value);
-
-/**
- * 发送绑定/换绑邮箱的验证码
- */
-const sendCaptchaForBindEmail = async () => {
-    sendingCaptcha.emailCaptcha = true;
-    createSendCaptchaHandler("EMAIL", "BIND_CHANGE", () => bindEmailForm.userEmail, "请输入邮箱地址以获取验证码")()
-        .then(() => {
-            bindEmailCooldown.start();
-        })
-        .finally(() => {
-            sendingCaptcha.emailCaptcha = false;
-        });
-};
-
-/**
- * 发送绑定/换绑手机号的验证码
- */
-const sendCaptchaForBindPhone = async () => {
-    sendingCaptcha.phoneCaptcha = true;
-    createSendCaptchaHandler("SMS", "BIND_CHANGE", () => bindPhoneForm.userPhone, "请输入手机号以获取验证码")()
-        .then(() => {
-            bindPhoneCooldown.start();
-        })
-        .finally(() => {
-            sendingCaptcha.phoneCaptcha = false;
-        });
-};
+// 手机号验证码发送器实例
+const phoneCaptchaSender = useCaptchaSender(
+    "SMS",
+    "BIND_CHANGE",
+    () => bindPhoneForm.userPhone,
+    "请输入手机号以获取验证码"
+);
 
 /**
  * 处理绑定/换绑邮箱
@@ -172,12 +141,6 @@ watch(
     },
     { immediate: true }
 );
-
-// 组件卸载前清除验证码冷却定时器，避免内存泄漏
-onBeforeUnmount(() => {
-    bindEmailCooldown.stop();
-    bindPhoneCooldown.stop();
-});
 </script>
 
 <template>
@@ -188,6 +151,10 @@ onBeforeUnmount(() => {
                 <span class="card-title">账号安全</span>
             </a-space>
         </template>
+        <div class="security-level">
+            <a-typography-title :level="5" class="security-title">安全等级</a-typography-title>
+        </div>
+        <a-divider />
         <a-tabs size="small">
             <a-tab-pane key="email" tab="邮箱绑定">
                 <a-form
@@ -219,12 +186,16 @@ onBeforeUnmount(() => {
                                 <template #prefix><CodeOutlined /></template>
                             </a-input>
                             <a-button
-                                :disabled="bindEmailCountdown > 0"
-                                :loading="sendingCaptcha.emailCaptcha"
-                                @click="sendCaptchaForBindEmail"
+                                :disabled="emailCaptchaSender.countdown.value > 0"
+                                :loading="emailCaptchaSender.sending.value"
+                                @click="emailCaptchaSender.send()"
                                 size="large"
                             >
-                                {{ bindEmailCountdown > 0 ? `${bindEmailCountdown}秒后重试` : "获取验证码" }}
+                                {{
+                                    emailCaptchaSender.countdown.value > 0
+                                        ? `${emailCaptchaSender.countdown.value}秒后重试`
+                                        : "获取验证码"
+                                }}
                             </a-button>
                         </a-space-compact>
                     </a-form-item>
@@ -256,12 +227,16 @@ onBeforeUnmount(() => {
                                 <template #prefix><CodeOutlined /></template>
                             </a-input>
                             <a-button
-                                :disabled="bindPhoneCountdown > 0"
-                                :loading="sendingCaptcha.phoneCaptcha"
-                                @click="sendCaptchaForBindPhone"
+                                :disabled="phoneCaptchaSender.countdown.value > 0"
+                                :loading="phoneCaptchaSender.sending.value"
+                                @click="phoneCaptchaSender.send()"
                                 size="large"
                             >
-                                {{ bindPhoneCountdown > 0 ? `${bindPhoneCountdown}秒后重试` : "获取验证码" }}
+                                {{
+                                    phoneCaptchaSender.countdown.value > 0
+                                        ? `${phoneCaptchaSender.countdown.value}秒后重试`
+                                        : "获取验证码"
+                                }}
                             </a-button>
                         </a-space-compact>
                     </a-form-item>
@@ -283,5 +258,14 @@ onBeforeUnmount(() => {
 .card-title {
     font-size: 16px;
     font-weight: 600;
+}
+
+.security-level {
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.security-title {
+    margin-bottom: 16px !important;
 }
 </style>

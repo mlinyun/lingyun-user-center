@@ -4,7 +4,7 @@
  */
 import { useAuthStore } from "@/stores/auth.ts";
 import { storeToRefs } from "pinia";
-import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 import { BusinessCode, CODE_REGEX, PHONE_REGEX, PWD_REGEX } from "@/constants";
 import { LockOutlined, SafetyOutlined, MailOutlined, MobileOutlined, CodeOutlined } from "@ant-design/icons-vue";
 import type { FormInstance } from "ant-design-vue";
@@ -12,9 +12,8 @@ import type { Api } from "@/types/api/typings";
 import type { Rule } from "ant-design-vue/es/form";
 import { messageUtils } from "@/utils/message";
 import { userEmailResetPwd, userPhoneResetPwd, userUpdatePwd } from "@/api/user.ts";
-import { createSendCaptchaHandler } from "@/utils/captcha/send-captcha.ts";
-import { useCaptchaCooldown } from "@/utils/captcha/captcha-cooldown.ts";
 import { formDataValidate } from "@/utils/form/form-data-validate.ts";
+import { useCaptchaSender } from "@/composable/send-captcha.ts";
 
 defineOptions({ name: "PasswordManagement" });
 
@@ -58,12 +57,6 @@ const submitting = reactive({
     updatePwdBtn: false,
     resetEmailBtn: false,
     resetPhoneBtn: false,
-});
-
-// 验证码发送状态
-const sendingCaptcha = reactive({
-    emailCaptcha: false,
-    phoneCaptcha: false,
 });
 
 // 表单验证规则
@@ -139,31 +132,13 @@ const handleUpdatePwd = async () => {
     }
 };
 
-// 邮箱验证码冷却机制实例
-const resetEmailCooldown = useCaptchaCooldown();
-
-// 手机号验证码冷却机制实例
-const resetPhoneCooldown = useCaptchaCooldown();
-
-// 计算属性，获取邮箱验证码冷却倒计时
-const resetEmailCountdown = computed(() => resetEmailCooldown.countdown.value);
-
-// 计算属性，获取手机号验证码冷却倒计时
-const resetPhoneCountdown = computed(() => resetPhoneCooldown.countdown.value);
-
-/**
- * 发送重置密码邮箱验证码
- */
-const sendCaptchaForResetEmail = async () => {
-    sendingCaptcha.emailCaptcha = true;
-    createSendCaptchaHandler("EMAIL", "RESET_PWD", () => resetEmailForm.userEmail, "请输入邮箱地址以获取验证码")()
-        .then(() => {
-            resetEmailCooldown.start();
-        })
-        .finally(() => {
-            sendingCaptcha.emailCaptcha = false;
-        });
-};
+// 邮箱验证码发送器实例
+const emailCaptchaSender = useCaptchaSender(
+    "EMAIL",
+    "RESET_PWD",
+    () => resetEmailForm.userEmail,
+    "请输入邮箱地址以获取验证码"
+);
 
 /**
  * 处理通过邮箱重置密码
@@ -192,19 +167,13 @@ const handleResetPwdByEmail = async () => {
     }
 };
 
-/**
- * 发送重置密码手机号验证码
- */
-const sendCaptchaForResetPhone = async () => {
-    sendingCaptcha.phoneCaptcha = true;
-    createSendCaptchaHandler("SMS", "RESET_PWD", () => resetPhoneForm.userPhone, "请输入手机号以获取验证码")()
-        .then(() => {
-            resetPhoneCooldown.start();
-        })
-        .finally(() => {
-            sendingCaptcha.phoneCaptcha = false;
-        });
-};
+// 手机号验证码发送器实例
+const phoneCaptchaSender = useCaptchaSender(
+    "SMS",
+    "RESET_PWD",
+    () => resetPhoneForm.userPhone,
+    "请输入手机号以获取验证码"
+);
 
 /**
  * 处理通过手机号重置密码
@@ -251,12 +220,6 @@ watch(
     },
     { immediate: true }
 );
-
-// 组件卸载前清除验证码冷却定时器，避免内存泄漏
-onBeforeUnmount(() => {
-    resetEmailCooldown.stop();
-    resetPhoneCooldown.stop();
-});
 </script>
 
 <template>
@@ -342,6 +305,7 @@ onBeforeUnmount(() => {
                     <a-form-item label="邮箱" name="userEmail" :rules="FormRules.userEmail">
                         <a-input
                             v-model:value="resetEmailForm.userEmail"
+                            :disabled="resetEmailForm.userEmail !== ''"
                             size="large"
                             placeholder="请输入邮箱地址"
                             allow-clear
@@ -360,12 +324,16 @@ onBeforeUnmount(() => {
                                 <template #prefix><CodeOutlined /></template>
                             </a-input>
                             <a-button
-                                :disabled="resetEmailCountdown > 0"
-                                :loading="sendingCaptcha.emailCaptcha"
-                                @click="sendCaptchaForResetEmail"
+                                :disabled="emailCaptchaSender.countdown.value > 0"
+                                :loading="emailCaptchaSender.sending.value"
+                                @click="emailCaptchaSender.send()"
                                 size="large"
                             >
-                                {{ resetEmailCountdown > 0 ? `${resetEmailCountdown}秒后重试` : "获取验证码" }}
+                                {{
+                                    emailCaptchaSender.countdown.value > 0
+                                        ? `${emailCaptchaSender.countdown.value}秒后重试`
+                                        : "获取验证码"
+                                }}
                             </a-button>
                         </a-space-compact>
                     </a-form-item>
@@ -413,6 +381,7 @@ onBeforeUnmount(() => {
                     <a-form-item label="手机号" name="userPhone" :rules="FormRules.userPhone">
                         <a-input
                             v-model:value="resetPhoneForm.userPhone"
+                            :disabled="resetPhoneForm.userPhone !== ''"
                             size="large"
                             placeholder="请输入手机号"
                             allow-clear
@@ -431,12 +400,16 @@ onBeforeUnmount(() => {
                                 <template #prefix><CodeOutlined /></template>
                             </a-input>
                             <a-button
-                                :disabled="resetPhoneCountdown > 0"
-                                :loading="sendingCaptcha.phoneCaptcha"
-                                @click="sendCaptchaForResetPhone"
+                                :disabled="phoneCaptchaSender.countdown.value > 0"
+                                :loading="phoneCaptchaSender.sending.value"
+                                @click="phoneCaptchaSender.send()"
                                 size="large"
                             >
-                                {{ resetPhoneCountdown > 0 ? `${resetPhoneCountdown}秒后重试` : "获取验证码" }}
+                                {{
+                                    phoneCaptchaSender.countdown.value > 0
+                                        ? `${phoneCaptchaSender.countdown.value}秒后重试`
+                                        : "获取验证码"
+                                }}
                             </a-button>
                         </a-space-compact>
                     </a-form-item>
