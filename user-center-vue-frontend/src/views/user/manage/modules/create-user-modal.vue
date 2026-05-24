@@ -35,10 +35,10 @@ const labelCol = { span: 6 };
 const wrapperCol = { span: 16 };
 
 // 管理员创建用户表单引用
-const formRef = ref<FormInstance>();
+const createUserFormRef = ref<FormInstance>();
 
 // 管理员创建用户表单数据
-const formModel = reactive<Api.UserAdmin.AdminAddUserRequest>({
+const createUserForm = reactive<Api.UserAdmin.AdminAddUserRequest>({
     userAccount: "",
     userPassword: "",
     checkPassword: "",
@@ -68,7 +68,7 @@ const FormRules: Record<string, Rule[]> = {
         { required: true, message: "请确认登录密码!", trigger: "blur" },
         {
             validator: (_rule, value) => {
-                if (value !== formModel.userPassword) {
+                if (value !== createUserForm.userPassword) {
                     return Promise.reject("两次输入的密码不一致!");
                 }
                 return Promise.resolve();
@@ -93,7 +93,7 @@ const handleSubmit = async () => {
     try {
         // 构建管理员创建用户请求对象（过滤掉空值字段）
         const payload: Api.UserAdmin.AdminAddUserRequest = Object.fromEntries(
-            Object.entries(toRaw(formModel)).filter(
+            Object.entries(toRaw(createUserForm)).filter(
                 ([, value]) => value !== null && value !== undefined && value !== ""
             )
         ) as Api.UserAdmin.AdminAddUserRequest;
@@ -158,12 +158,12 @@ const calculatePasswordStrength = (password: string): number => {
  * 关闭模态框时调用，确保每次打开都是一个干净的表单
  */
 const resetForm = () => {
-    formRef.value?.resetFields();
-    formRef.value?.clearValidate();
+    createUserFormRef.value?.resetFields();
+    createUserFormRef.value?.clearValidate();
 };
 
 watch(
-    () => formModel.userPassword,
+    () => createUserForm.userPassword,
     (value) => {
         passwordStrength.value = calculatePasswordStrength(value);
     }
@@ -202,9 +202,9 @@ watch(
         </div>
 
         <a-form
-            ref="formRef"
+            ref="createUserFormRef"
             layout="horizontal"
-            :model="formModel"
+            :model="createUserForm"
             :label-col="labelCol"
             :wrapper-col="wrapperCol"
             autocomplete="off"
@@ -219,14 +219,12 @@ watch(
                 </a-divider>
                 <a-form-item label="登录账号" name="userAccount" :rules="FormRules.userAccount">
                     <a-input
-                        v-model:value="formModel.userAccount"
+                        v-model:value="createUserForm.userAccount"
                         allow-clear
                         class="rounded-input"
                         placeholder="请输入登录账号"
                     >
-                        <template #prefix>
-                            <UserOutlined />
-                        </template>
+                        <template #prefix><UserOutlined /></template>
                     </a-input>
                 </a-form-item>
             </div>
@@ -240,14 +238,12 @@ watch(
                 </a-divider>
                 <a-form-item label="登录密码" name="userPassword" :rules="FormRules.userPassword">
                     <a-input-password
-                        v-model:value="formModel.userPassword"
+                        v-model:value="createUserForm.userPassword"
                         allow-clear
                         class="rounded-input"
                         placeholder="请输入登录密码"
                     >
-                        <template #prefix>
-                            <LockOutlined />
-                        </template>
+                        <template #prefix><LockOutlined /></template>
                     </a-input-password>
                 </a-form-item>
                 <div v-if="passwordStrength > 0" class="password-strength">
@@ -261,14 +257,12 @@ watch(
                 </div>
                 <a-form-item label="确认密码" name="checkPassword" :rules="FormRules.checkPassword">
                     <a-input-password
-                        v-model:value="formModel.checkPassword"
+                        v-model:value="createUserForm.checkPassword"
                         allow-clear
                         class="rounded-input"
                         placeholder="请再次输入密码"
                     >
-                        <template #prefix>
-                            <SafetyOutlined />
-                        </template>
+                        <template #prefix><SafetyOutlined /></template>
                     </a-input-password>
                 </a-form-item>
             </div>
@@ -282,24 +276,22 @@ watch(
                 </a-divider>
                 <a-form-item label="用户昵称" name="userName" :rules="FormRules.userName">
                     <a-input
-                        v-model:value="formModel.userName"
+                        v-model:value="createUserForm.userName"
                         allow-clear
                         class="rounded-input"
                         placeholder="请输入用户昵称"
                     >
-                        <template #prefix>
-                            <UserOutlined />
-                        </template>
+                        <template #prefix><UserOutlined /></template>
                     </a-input>
                 </a-form-item>
                 <a-form-item label="用户角色" name="userRole">
-                    <a-radio-group v-model:value="formModel.userRole">
+                    <a-radio-group v-model:value="createUserForm.userRole">
                         <a-radio value="user"> <TeamOutlined /> 普通用户 </a-radio>
                         <a-radio value="admin"> <SafetyOutlined /> 管理员 </a-radio>
                     </a-radio-group>
                 </a-form-item>
                 <a-form-item label="性别" name="userGender">
-                    <a-radio-group v-model:value="formModel.userGender">
+                    <a-radio-group v-model:value="createUserForm.userGender">
                         <a-radio :value="0">女</a-radio>
                         <a-radio :value="1">男</a-radio>
                         <a-radio :value="2">未知</a-radio>
@@ -307,31 +299,27 @@ watch(
                 </a-form-item>
                 <a-form-item label="手机号码" name="userPhone" :rules="FormRules.userPhone">
                     <a-input
-                        v-model:value="formModel.userPhone"
+                        v-model:value="createUserForm.userPhone"
                         allow-clear
                         class="rounded-input"
                         placeholder="请输入手机号码"
                     >
-                        <template #prefix>
-                            <PhoneOutlined />
-                        </template>
+                        <template #prefix><PhoneOutlined /> </template>
                     </a-input>
                 </a-form-item>
                 <a-form-item label="邮箱地址" name="userEmail" :rules="FormRules.userEmail">
                     <a-input
-                        v-model:value="formModel.userEmail"
+                        v-model:value="createUserForm.userEmail"
                         allow-clear
                         class="rounded-input"
                         placeholder="请输入邮箱地址"
                     >
-                        <template #prefix>
-                            <MailOutlined />
-                        </template>
+                        <template #prefix><MailOutlined /></template>
                     </a-input>
                 </a-form-item>
                 <a-form-item label="个人简介" name="userProfile" :rules="FormRules.userProfile">
                     <a-textarea
-                        v-model:value="formModel.userProfile"
+                        v-model:value="createUserForm.userProfile"
                         :maxlength="200"
                         :rows="3"
                         placeholder="请输入个人简介"

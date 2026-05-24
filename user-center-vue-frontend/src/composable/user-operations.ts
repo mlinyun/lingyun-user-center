@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { adminAddUser } from "@/api/user-admin.ts";
+import { adminAddUser, adminResetUserPwd } from "@/api/user-admin.ts";
 import type { Api } from "@/types/api/typings";
 import { BusinessCode } from "@/constants";
 
@@ -8,7 +8,7 @@ import { BusinessCode } from "@/constants";
  */
 export const useUserOperations = () => {
     /**
-     * 提交状态控制
+     * 提交状态控制.
      */
     const submitting = ref(false);
 
@@ -29,5 +29,24 @@ export const useUserOperations = () => {
             submitting.value = false;
         }
     };
-    return { submitting, handleAdminAddUser };
+
+    /**
+     * 管理员重置用户密码.
+     *
+     * @param payload 管理员重置用户密码请求体，详见 {@linkcode Api.UserAdmin.AdminResetUserPwdRequest}
+     */
+    const handleAdminResetUserPwd = async (payload: Api.UserAdmin.AdminResetUserPwdRequest) => {
+        submitting.value = true;
+        try {
+            const { data } = await adminResetUserPwd(payload);
+            return data.code === BusinessCode.SUCCESS && data.success;
+        } catch (error) {
+            console.log("管理员重置用户密码失败", error);
+            return false;
+        } finally {
+            submitting.value = false;
+        }
+    };
+
+    return { submitting, handleAdminAddUser, handleAdminResetUserPwd };
 };

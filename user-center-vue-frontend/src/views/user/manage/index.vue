@@ -5,10 +5,14 @@
 import { ref } from "vue";
 import CreateUserModal from "@views/user/manage/modules/create-user-modal.vue";
 import { PlusOutlined } from "@ant-design/icons-vue";
+import ResetPasswordModal from "@views/user/manage/modules/reset-password-modal.vue";
+import type { Api } from "@/types/api/typings";
 
 defineOptions({ name: "UserManage" });
 
-const createModalVisible = ref(false);
+const createUserModalVisible = ref<boolean>(false);
+const resetPasswordModalVisible = ref<boolean>(false);
+const resetPasswordUser = ref<Api.UserAdmin.UserVo | null>(null);
 
 const refreshTable = () => {};
 </script>
@@ -17,8 +21,14 @@ const refreshTable = () => {};
     <a-layout id="user-manage">
         <a-layout-content class="manage-content">
             <div>用户管理页面</div>
-            <a-button type="primary" @click="createModalVisible = true"> <PlusOutlined /> 新建用户</a-button>
-            <create-user-modal v-model:visible="createModalVisible" @success="refreshTable" />
+            <a-button type="primary" @click="createUserModalVisible = true"> <PlusOutlined /> 新建用户</a-button>
+            <create-user-modal v-model:visible="createUserModalVisible" @success="refreshTable" />
+            <a-button type="primary" @click="resetPasswordModalVisible = true"> <PlusOutlined /> 重置密码</a-button>
+            <reset-password-modal
+                v-model:visible="resetPasswordModalVisible"
+                :user="resetPasswordUser"
+                @success="refreshTable"
+            />
         </a-layout-content>
     </a-layout>
 </template>
