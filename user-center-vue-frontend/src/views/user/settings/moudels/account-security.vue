@@ -2,10 +2,17 @@
 /**
  * 账户安全设置卡片
  */
-import { CodeOutlined, MailOutlined, MobileOutlined, SafetyOutlined } from "@ant-design/icons-vue";
+import {
+    CodeOutlined,
+    MailOutlined,
+    MobileOutlined,
+    SafetyOutlined,
+    CheckCircleOutlined,
+    WarningOutlined,
+} from "@ant-design/icons-vue";
 import { BusinessCode, CODE_REGEX, PHONE_REGEX } from "@/constants";
 import type { Rule } from "ant-design-vue/es/form";
-import { reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance } from "ant-design-vue";
 import type { Api } from "@/types/api/typings";
 import { useAuthStore } from "@/stores/auth.ts";
@@ -19,6 +26,73 @@ defineOptions({ name: "AccountSecurity" });
 const authStore = useAuthStore();
 // storeToRefs 解构后仍保持响应性
 const { user: loginUser } = storeToRefs(authStore);
+
+// 计算账号安全信息
+const securityInfo = computed(() => {
+    let score = 20;
+    let levelText = "较低";
+    let color = "#ff4d4f";
+    const tips: string[] = [];
+
+    if (loginUser.value?.userEmail) {
+        score += 20;
+    } else {
+        tips.push("绑定邮箱可以提升账号安全性");
+    }
+
+    if (loginUser.value?.userPhone) {
+        score += 20;
+    } else {
+        tips.push("绑定手机号可以提升账号安全性");
+    }
+
+    if (loginUser.value?.userAvatar) {
+        score += 15;
+    } else {
+        tips.push("头像还没选好？上传一张专属图片，让个人主页更生动吧");
+    }
+
+    if (loginUser.value?.userProfile) {
+        score += 15;
+    } else {
+        tips.push("个人简介可以让别人更了解你，快来写一句自我介绍吧");
+    }
+
+    if (loginUser.value?.userGender !== undefined && loginUser.value?.userGender !== 2) {
+        score += 10;
+    } else {
+        tips.push("完善性别信息可以让系统更好地为你推荐内容");
+    }
+
+    if (score > 100) {
+        score = 100;
+    }
+
+    if (score > 90) {
+        levelText = "极高";
+        color = "#52c41a";
+    } else if (score >= 70) {
+        levelText = "高";
+        color = "#6469c4";
+    } else if (score > 50) {
+        levelText = "中等";
+        color = "#b15b8a";
+    }
+
+    return { score, levelText, color, tips };
+});
+
+// 计算账号状态信息
+const accountStatus = computed(() => [
+    {
+        label: "邮箱验证",
+        verified: loginUser.value?.emailVerified,
+    },
+    {
+        label: "手机验证",
+        verified: loginUser.value?.phoneVerified,
+    },
+]);
 
 const labelCol = { span: 0 };
 const wrapperCol = { span: 24 };
@@ -153,6 +227,42 @@ watch(
         </template>
         <div class="security-level">
             <a-typography-title :level="5" class="security-title">安全等级</a-typography-title>
+            <a-progress type="circle" :size="100" :percent="securityInfo.score" :stroke-color="securityInfo.color">
+                <template #format>
+                    <div :style="{ color: securityInfo.color }" class="progress-content">
+                        <div class="progress-score">{{ securityInfo.score }}</div>
+                        <div class="progress-level">
+                            {{ securityInfo.levelText }}
+                        </div>
+                    </div>
+                </template>
+            </a-progress>
+        </div>
+        <div class="security-tips">
+            <a-typography-text class="security-tip-title" strong>
+                <a-space>
+                    <CheckCircleOutlined v-if="securityInfo.score >= 80" style="color: #52c41a" />
+                    <WarningOutlined v-else style="color: #faad14" />
+                    {{ securityInfo.score >= 80 ? "账号安全性良好" : "建议完善信息" }}
+                </a-space>
+            </a-typography-text>
+            <div v-if="securityInfo.tips.length" class="security-tip-tags">
+                <a-tag v-for="tip in securityInfo.tips" :key="tip" color="blue">
+                    {{ tip }}
+                </a-tag>
+            </div>
+        </div>
+        <a-divider />
+        <div class="security-status">
+            <a-typography-text class="status-label" type="secondary"> 账号状态 </a-typography-text>
+            <a-space :size="8" direction="vertical" :style="{ width: '100%' }">
+                <div v-for="item in accountStatus" :key="item.label" class="status-item">
+                    <span>{{ item.label }}</span>
+                    <a-tag :color="item.verified ? 'success' : 'default'">
+                        {{ item.verified ? "已验证" : "未设置" }}
+                    </a-tag>
+                </div>
+            </a-space>
         </div>
         <a-divider />
         <a-tabs size="small">
@@ -267,5 +377,53 @@ watch(
 
 .security-title {
     margin-bottom: 16px !important;
+}
+
+.progress-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.progress-score {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.progress-level {
+    font-size: 12px;
+    color: var(--ant-color-text-tertiary);
+}
+
+.security-tips {
+    text-align: center;
+}
+
+.security-tip-title {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.security-tip-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-label {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 12px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
 }
 </style>
