@@ -111,6 +111,7 @@ const handleUpdatePwd = async () => {
     // 表单数据验证
     const validated = await formDataValidate(updatePwdFormRef.value!);
     if (!validated) {
+        messageUtils.error("请修正表单中的错误后再提交");
         return;
     }
     submitting.updatePwdBtn = true;
@@ -147,6 +148,7 @@ const handleResetPwdByEmail = async () => {
     // 表单数据验证
     const validated = await formDataValidate(resetEmailFormRef.value!);
     if (!validated) {
+        messageUtils.error("请修正表单中的错误后再提交");
         return;
     }
     submitting.resetEmailBtn = true;
@@ -182,6 +184,7 @@ const handleResetPwdByPhone = async () => {
     // 表单数据验证
     const validated = await formDataValidate(resetPhoneFormRef.value!);
     if (!validated) {
+        messageUtils.error("请修正表单中的错误后再提交");
         return;
     }
     submitting.resetPhoneBtn = true;

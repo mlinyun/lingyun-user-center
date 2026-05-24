@@ -20,6 +20,7 @@ import { storeToRefs } from "pinia";
 import { formDataValidate } from "@/utils/form/form-data-validate.ts";
 import { userBindEmail, userBindPhone } from "@/api/user.ts";
 import { useCaptchaSender } from "@/composable/send-captcha.ts";
+import { messageUtils } from "@/utils/message";
 
 defineOptions({ name: "AccountSecurity" });
 
@@ -34,13 +35,13 @@ const securityInfo = computed(() => {
     let color = "#ff4d4f";
     const tips: string[] = [];
 
-    if (loginUser.value?.userEmail) {
+    if (loginUser.value?.userEmail && loginUser.value.emailVerified) {
         score += 20;
     } else {
         tips.push("绑定邮箱可以提升账号安全性");
     }
 
-    if (loginUser.value?.userPhone) {
+    if (loginUser.value?.userPhone && loginUser.value.phoneVerified) {
         score += 20;
     } else {
         tips.push("绑定手机号可以提升账号安全性");
@@ -158,6 +159,7 @@ const handleBindEmail = async () => {
     // 表单数据验证
     const validated = await formDataValidate(bindEmailFormRef.value!);
     if (!validated) {
+        messageUtils.error("请修正表单中的错误后再提交");
         return;
     }
     submitting.bindEmailBtn = true;
@@ -182,6 +184,7 @@ const handleBindPhone = async () => {
     // 表单数据验证
     const validated = await formDataValidate(bindPhoneFormRef.value!);
     if (!validated) {
+        messageUtils.error("请修正表单中的错误后再提交");
         return;
     }
     submitting.bindPhoneBtn = true;

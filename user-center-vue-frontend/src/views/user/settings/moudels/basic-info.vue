@@ -39,8 +39,8 @@ const updateInfoForm = reactive<Api.User.UserUpdateInfoRequest>({
 
 // 表单验证规则
 const FormRules: Record<string, Rule[]> = {
-    userName: [{ max: 20, message: "昵称长度不超过 20 个字符" }],
-    userProfile: [{ max: 200, message: "简介长度不超过 200 个字符" }],
+    userName: [{ max: 20, message: "昵称长度不超过 20 个字符", trigger: "blur" }],
+    userProfile: [{ max: 200, message: "简介长度不超过 200 个字符", trigger: "blur" }],
 };
 
 /**
@@ -54,6 +54,7 @@ const handleUpdateInfo = async () => {
     // 表单数据验证
     const validated = await formDataValidate(updateInfoFormRef.value!);
     if (!validated) {
+        messageUtils.error("请修正表单中的错误后再提交");
         return;
     }
     submitting.value = true;

@@ -7,3 +7,6 @@ export const PHONE_REGEX = /^1[3-9]\d{9}$/;
 
 /** 6位数字验证码正则 */
 export const CODE_REGEX = /^\d{6}$/;
+
+/** 登录账号正则：只能包含字数、数字和下划线 */
+export const ACCOUNT_REGEX = /^[a-zA-Z0-9_]+$/;

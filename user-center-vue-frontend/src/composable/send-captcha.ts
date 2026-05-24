@@ -71,22 +71,17 @@ export const useCaptchaSender = (
         if (sending.value || countdown.value > 0) {
             return;
         }
-
         // 获取验证码接收目标
         const target = getTarget();
-
         // 校验接收目标是否为空
         if (!target) {
             messageUtils.warning(emptyWarning);
             return;
         }
-
         sending.value = true;
-
         try {
             // 调用验证码发送接口
             await sendCaptcha({ type, scene, target });
-
             // 启动冷却倒计时
             cooldown.start(cooldownSeconds);
         } catch (error) {
