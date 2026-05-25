@@ -811,6 +811,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public String userUploadAvatar(MultipartFile file, HttpServletRequest request) {
+        // 1. 获取当前登录用户
+        User loginUser = this.getLoginUser(request);
+        Long userId = loginUser.getId();
+
+        // 2. 执行核心上传逻辑（参数校验、上传文件、回写 URL）
+        String avatarUrl = coreUploadAvatar(file, userId);
+
+        // 3. 同步最新用户信息到 Session
+        User latestUser = this.getById(userId);
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, latestUser);
+
+        return avatarUrl;
+    }
+
+    /**
+     * 用户头像上传核心逻辑（参数校验、上传文件、回写 URL）.
+     *
+     * @param file file {@linkplain MultipartFile 头像文件}
+     * @param userId 用户 ID
+     * @return 上传后的头像 URL
+     */
+    private String coreUploadAvatar(MultipartFile file, Long userId) {
         // 1. 参数校验
         ThrowUtils.throwIf(file == null || file.isEmpty(), ErrorCode.PARAMS_ERROR, UserConstant.AVATAR_FILE_EMPTY_MSG);
         // 2. 校验文件大小，以字节为单位
@@ -823,15 +845,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean extensionAllowed = UserConstant.AVATAR_ALLOWED_EXTENSIONS.contains(fileSuffix);
         ThrowUtils.throwIf(!extensionAllowed, ErrorCode.PARAMS_ERROR, UserConstant.AVATAR_FILE_TYPE_INVALID_MSG);
 
-        // 3. 获取当前登录用户
-        User loginUser = this.getLoginUser(request);
-        Long userId = loginUser.getId();
-
-        // 4. 构造图片上传路径
-        String uuid = UUID.randomUUID().toString().replace("-", ""); // 生成一个随机的 UUID 作为文件名的一部分，去掉其中的连字符
+        // 3. 构造图片上传路径
+        // 生成一个随机的 UUID 作为文件名的一部分，去掉其中的连字符
+        String uuid = UUID.randomUUID().toString().replace("-", "");
         String objectKey = String.format(UserConstant.AVATAR_UPLOAD_PATH + "/%d/%s.%s", userId, uuid, fileSuffix);
 
-        // 5. 上传文件到对象存储
+        // 4. 上传文件到对象存储
         File tempFile = null;
         // 需要回写的头像 URL
         String avatarUrl;
@@ -875,7 +894,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             this.deleteTempFile(tempFile);
         }
 
-        // 6. 回写头像 URL 到数据库
+        // 5. 回写头像 URL 到数据库
         User updateUser = new User();
         updateUser.setId(userId);
         updateUser.setUserAvatar(avatarUrl);
@@ -883,10 +902,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean updateResult = this.updateById(updateUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, "头像更新失败，数据库更新异常");
 
-        // 7. 同步最新用户信息到 Session
-        User latestUser = this.getById(userId);
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, latestUser);
-
+        // 6. 返回头像 URL
         return avatarUrl;
     }
 
@@ -1017,7 +1033,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public boolean adminUpdateUserInfo(AdminUpdateUserInfoRequest adminUpdateUserInfoRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminUpdateUserInfoRequest), ErrorCode.PARAMS_ERROR, "用户信息更新请求不能为空");
-        // 使用用户 ID 检查用户是否存在
+        // 通过用户 ID 检查用户是否存在
         this.getUserByIdAndThrow(adminUpdateUserInfoRequest.getId());
         // 构建更新实体
         User updateUser = new User();
@@ -1217,6 +1233,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, UserConstant.ACCOUNT_NOT_EXIST_MSG);
         }
         return user;
+    }
+
+    /**
+     * 管理员上传或修改头像.
+     *
+     * @param file {@linkplain MultipartFile 头像文件}
+     * @param userId 用户 ID
+     * @return 上传后的头像 URL
+     */
+    @Override
+    public String adminUploadAvatar(MultipartFile file, Long userId) {
+        // 检查用户 ID 是否存在
+        User user = this.getUserByIdAndThrow(userId);
+        // 检查用户是否被禁用
+        boolean banned = UserStatusEnum.isBanned(user.getUserStatus());
+        ThrowUtils.throwIf(banned, ErrorCode.FORBIDDEN_ERROR, UserConstant.ACCOUNT_BANNED_MSG);
+        // 执行核心上传逻辑（参数校验、上传文件、回写 URL）
+        return coreUploadAvatar(file, userId);
     }
     // endregion
 

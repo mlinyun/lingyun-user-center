@@ -20,11 +20,16 @@ import com.mlinyun.usercenterbackend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户管理控制器.
@@ -166,4 +171,22 @@ public class UserAdminController {
         boolean result = userService.adminBanOrUnbanUser(adminBanUserRequest);
         return ResultUtils.success(result);
     }
+
+    /**
+     * 管理员上传或修改头像.
+     *
+     * @param file {@linkplain MultipartFile 头像文件}
+     * @param userId 用户 ID
+     * @return 上传后的头像 URL
+     */
+    @ApiOperationSupport(author = "LingYun")
+    @PostMapping("/avatar")
+    @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
+    @Operation(summary = "管理员上传或修改头像", description = "管理员上传或修改头像接口")
+    public BaseResponse<String> adminUploadAvatar(@RequestPart("file") @NotNull MultipartFile file,
+            @RequestParam("userId") @NotNull @PositiveOrZero Long userId) {
+        String avatarUrl = userService.adminUploadAvatar(file, userId);
+        return ResultUtils.success(avatarUrl);
+    }
+
 }

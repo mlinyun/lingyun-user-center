@@ -239,6 +239,15 @@ public interface UserService extends IService<User> {
      * @return 是否操作成功
      */
     boolean adminBanOrUnbanUser(AdminBanUserRequest adminBanUserRequest);
+
+    /**
+     * 管理员上传或修改头像.
+     *
+     * @param file {@linkplain MultipartFile 头像文件}
+     * @param userId 用户 ID
+     * @return 上传后的头像 URL
+     */
+    String adminUploadAvatar(MultipartFile file, Long userId);
     // endregion
 
 }
