@@ -17,6 +17,7 @@
 import { http } from "@/utils/request/http.ts";
 import type { AxiosResponse } from "axios";
 import type { Api } from "@/types/api/typings";
+import { CONTENT_TYPE } from "@/constants";
 
 /**
  * 管理员添加用户.
@@ -139,5 +140,32 @@ export const adminBanOrUnbanUser = (
     return http.post<Api.Common.OperationResultResponseData>("/admin/user/status", data, {
         showSuccessMessage: true,
         successMessage: "操作成功",
+    });
+};
+
+/**
+ * 管理员上传或修改头像.
+ * @name userUploadAvatar
+ * @tags 用户管理模块
+ * @description 管理员通过上传头像文件来设置或更新用户的头像信息
+ * @request POST `/admin/user/avatar`
+ * @param file 头像文件
+ * @param userId 用户 ID，详见 {@linkcode Api.Common.Id}
+ * @returns 上传后的头像 URL，详见 {@linkcode Api.Common.StringResponse}
+ */
+export const adminUploadAvatar = (
+    file: File,
+    userId: Api.Common.Id
+): Promise<AxiosResponse<Api.Common.StringResponse>> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("userId", userId);
+
+    return http.post<Api.Common.StringResponseData>("/admin/user/avatar", formData, {
+        headers: {
+            "Content-Type": CONTENT_TYPE.MULTIPART,
+        },
+        showSuccessMessage: true,
+        successMessage: "头像上传成功",
     });
 };

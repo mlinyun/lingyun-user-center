@@ -12,6 +12,8 @@ import {
     MailOutlined,
     SafetyOutlined,
     TeamOutlined,
+    WomanOutlined,
+    ManOutlined,
 } from "@ant-design/icons-vue";
 import type { FormInstance } from "ant-design-vue";
 import type { Api } from "@/types/api/typings";
@@ -158,6 +160,7 @@ const calculatePasswordStrength = (password: string): number => {
  * 关闭模态框时调用，确保每次打开都是一个干净的表单
  */
 const resetForm = () => {
+    passwordStrength.value = 0;
     createUserFormRef.value?.resetFields();
     createUserFormRef.value?.clearValidate();
 };
@@ -286,15 +289,15 @@ watch(
                 </a-form-item>
                 <a-form-item label="用户角色" name="userRole">
                     <a-radio-group v-model:value="createUserForm.userRole">
-                        <a-radio value="user"> <TeamOutlined /> 普通用户 </a-radio>
-                        <a-radio value="admin"> <SafetyOutlined /> 管理员 </a-radio>
+                        <a-radio value="user"><TeamOutlined /> 普通用户</a-radio>
+                        <a-radio value="admin"><SafetyOutlined /> 管理员</a-radio>
                     </a-radio-group>
                 </a-form-item>
                 <a-form-item label="性别" name="userGender">
                     <a-radio-group v-model:value="createUserForm.userGender">
-                        <a-radio :value="0">女</a-radio>
-                        <a-radio :value="1">男</a-radio>
-                        <a-radio :value="2">未知</a-radio>
+                        <a-radio :value="0"><WomanOutlined style="color: #eb2f96" /> 女</a-radio>
+                        <a-radio :value="1"><ManOutlined style="color: #1890ff" /> 男</a-radio>
+                        <a-radio :value="2"><UserOutlined style="color: rgb(0 0 0 / 25%)" /> 未知</a-radio>
                     </a-radio-group>
                 </a-form-item>
                 <a-form-item label="手机号码" name="userPhone" :rules="FormRules.userPhone">

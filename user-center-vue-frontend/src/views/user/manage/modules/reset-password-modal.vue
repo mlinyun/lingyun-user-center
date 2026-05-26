@@ -61,12 +61,7 @@ const handleSubmit = async () => {
         return;
     }
     try {
-        // 构建管理员重置用户密码请求对象
-        const payload: Api.UserAdmin.AdminResetUserPwdRequest = {
-            id: props.user.id,
-            newPassword: resetPwdForm.newPassword,
-        };
-        const resetUserPwdResult = await userOperations.handleAdminResetUserPwd(payload);
+        const resetUserPwdResult = await userOperations.handleAdminResetUserPwd(resetPwdForm);
         if (resetUserPwdResult) {
             emit("success");
             emit("update:visible", false);
@@ -88,7 +83,9 @@ const resetForm = () => {
 watch(
     () => props.visible,
     (visible) => {
-        if (!visible) {
+        if (visible) {
+            resetPwdForm.id = props.user?.id || "";
+        } else {
             resetForm();
         }
     }
@@ -102,7 +99,7 @@ watch(
         :open="props.visible"
         destroy-on-close
         title="重置用户密码"
-        width="400px"
+        width="450px"
         @cancel="handleCancel"
         @ok="handleSubmit"
     >

@@ -60,13 +60,13 @@ export declare namespace Api {
             /** 数据列表 */
             records?: T[];
             /** 当前页码 */
-            pageNumber?: number;
+            current?: number;
             /** 每页大小 */
-            pageSize?: number;
+            size?: number;
             /** 总页数 */
-            totalPage?: number;
+            pages?: number;
             /** 总记录数 */
-            totalRow?: number;
+            total?: number;
         }
 
         /** 获取或删除通用请求参数 */

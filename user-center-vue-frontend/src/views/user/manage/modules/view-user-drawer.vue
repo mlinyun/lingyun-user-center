@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 用户详情抽屉组件
+ * 用户详情抽屉组件.
  */
 import type { Api } from "@/types/api/typings";
 import { UserOutlined, SafetyOutlined, TeamOutlined } from "@ant-design/icons-vue";
@@ -54,9 +54,11 @@ const genderText = computed(() => {
                 </a-avatar>
                 <div class="profile-meta">
                     <h3>{{ user.userName || "未设置昵称" }}</h3>
-                    <span class="account">@{{ user.userAccount }}</span>
-                    <a-tag v-if="user.userRole === USER_ROLE.ADMIN" color="blue"><SafetyOutlined /> 管理员</a-tag>
-                    <a-tag v-else color="default"><TeamOutlined /> 普通用户</a-tag>
+                    <div class="profile-info">
+                        <span class="account">@{{ user.userAccount }}</span>
+                        <a-tag v-if="user.userRole === USER_ROLE.ADMIN" color="gold"><SafetyOutlined /> 管理员</a-tag>
+                        <a-tag v-else color="blue"><TeamOutlined /> 普通用户</a-tag>
+                    </div>
                 </div>
             </div>
 
@@ -69,9 +71,11 @@ const genderText = computed(() => {
                 </a-descriptions-item>
                 <a-descriptions-item label="手机号码">
                     {{ user.userPhone || "未填写" }}
+                    {{ user.phoneVerified ? "（已验证）" : "（未验证）" }}
                 </a-descriptions-item>
                 <a-descriptions-item label="邮箱地址">
                     {{ user.userEmail || "未填写" }}
+                    {{ user.emailVerified ? "（已验证）" : "（未验证）" }}
                 </a-descriptions-item>
                 <a-descriptions-item label="账号状态">
                     <a-badge :status="user.userStatus === USER_STATUS.NORMAL ? 'success' : 'error'" />
@@ -107,6 +111,13 @@ const genderText = computed(() => {
     align-items: center;
 }
 
+.profile-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
 .profile-meta h3 {
     margin: 0;
     font-size: 18px;
@@ -116,7 +127,8 @@ const genderText = computed(() => {
 
 .profile-meta .account {
     display: inline-block;
-    margin: 4px 0 8px;
+    padding: 0 10px 0 0;
+    margin: 10px 0;
     color: rgb(0 0 0 / 45%);
 }
 

@@ -18,6 +18,7 @@
 import { http } from "@/utils/request/http.ts";
 import type { AxiosResponse } from "axios";
 import type { Api } from "@/types/api/typings";
+import { CONTENT_TYPE } from "@/constants";
 
 /**
  * 用户注册 - 账号注册.
@@ -277,7 +278,7 @@ export const userUploadAvatar = (file: File): Promise<AxiosResponse<Api.Common.S
 
     return http.post<Api.Common.StringResponseData>("/user/avatar", formData, {
         headers: {
-            "Content-Type": "multipart/form-data",
+            "Content-Type": CONTENT_TYPE.MULTIPART,
         },
         showSuccessMessage: true,
         successMessage: "头像上传成功",
