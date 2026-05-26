@@ -116,6 +116,33 @@
 
 <img src="https://static.mlinyun.com/user-center/system_architecture.svg" alt="凌云用户中心系统架构图">
 
+## 🧭 项目结构
+
+```text
+.
+├── user-center-backend/       # Spring Boot 后端
+├── user-center-vue-frontend/  # Vue 3 + Vite 前端
+├── user-center-docs/          # VitePress 文档
+├── user-center-sql/           # 数据库初始化脚本
+├── user-center-nginx/         # Nginx 配置
+└── scripts/                   # 辅助脚本
+```
+
+## 🧩 后端模块一览
+
+- 用户模块：注册 / 登录 / 资料 / 密码 / 绑定
+- 管理模块：用户 CRUD / 分页查询 / 重置密码 / 封禁解封
+- 验证码模块：邮箱 / 短信发送、限流、审计日志
+- 文件上传：COS 上传、图片压缩与缩略图
+- 会话与权限：Spring Session + AOP 权限控制
+
+## 🧩 前端功能一览
+
+- 认证页面：登录 / 注册（账号、邮箱、手机号）
+- 个人中心：资料展示、账号设置、密码管理
+- 管理后台：用户列表、搜索、编辑、重置密码、封禁
+- 权限路由：管理员页面保护与鉴权状态机
+
 ### 后端技术栈
 
 | 技术           | 版本      | 说明                 |
@@ -423,29 +450,3 @@ server {
 🙏 如果这个项目对你有帮助，欢迎点亮 ⭐️ Star、转发分享、或参与共建。
 Made with ❤️ by <a href="https://github.com/mlinyun">mlinyun</a>
 </div>
-
-## 🧭 项目结构
-
-```text
-.
-├── user-center-backend/       # Spring Boot 后端
-├── user-center-vue-frontend/  # Vue 3 + Vite 前端
-├── user-center-docs/          # VitePress 文档
-├── user-center-sql/           # 数据库初始化脚本
-└── scripts/                   # 辅助脚本
-```
-
-## 🧩 后端模块一览
-
-- 用户模块：注册 / 登录 / 资料 / 密码 / 绑定
-- 管理模块：用户 CRUD / 分页查询 / 重置密码 / 封禁解封
-- 验证码模块：邮箱 / 短信发送、限流、审计日志
-- 文件上传：COS 上传、图片压缩与缩略图
-- 会话与权限：Spring Session + AOP 权限控制
-
-## 🧩 前端功能一览
-
-- 认证页面：登录 / 注册（账号、邮箱、手机号）
-- 个人中心：资料展示、账号设置、密码管理
-- 管理后台：用户列表、搜索、编辑、重置密码、封禁
-- 权限路由：管理员页面保护与鉴权状态机
