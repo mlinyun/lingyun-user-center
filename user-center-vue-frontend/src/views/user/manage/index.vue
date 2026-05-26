@@ -2,7 +2,7 @@
 /**
  * 用户管理页面.
  */
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import CreateUserModal from "@views/user/manage/modules/create-user-modal.vue";
 import { PlusOutlined, TeamOutlined } from "@ant-design/icons-vue";
 import ResetPasswordModal from "@views/user/manage/modules/reset-password-modal.vue";
@@ -10,8 +10,13 @@ import type { Api } from "@/types/api/typings";
 import ViewUserDrawer from "@views/user/manage/modules/view-user-drawer.vue";
 import EditUserModal from "@views/user/manage/modules/edit-user-modal.vue";
 import UserTable from "@views/user/manage/modules/user-table.vue";
+import SearchForm from "@views/user/manage/modules/search-form.vue";
 
 defineOptions({ name: "UserManage" });
+
+type UserTableExposed = {
+    refreshData: (resetPage?: boolean) => Promise<void>;
+};
 
 const createUserModalVisible = ref<boolean>(false);
 const resetPasswordModalVisible = ref<boolean>(false);
@@ -20,8 +25,21 @@ const editModalVisible = ref<boolean>(false);
 const resetPasswordUser = ref<Api.UserAdmin.UserVo | null>(null);
 const viewingUser = ref<Api.UserAdmin.UserVo | null>(null);
 const editingUser = ref<Api.UserAdmin.UserVo | null>(null);
+const userTableRef = ref<UserTableExposed>();
+const currentSearchForm = ref<Api.UserAdmin.SearchForm>();
 
-const refreshTable = () => {};
+const handleSearch = (searchForm: Api.UserAdmin.SearchForm) => {
+    currentSearchForm.value = {
+        ...searchForm,
+        createTimeRange: searchForm.createTimeRange
+            ? [searchForm.createTimeRange[0], searchForm.createTimeRange[1]]
+            : undefined,
+    };
+};
+
+const refreshTable = () => {
+    userTableRef.value?.refreshData();
+};
 
 /**
  * 关闭抽屉并清除正在查看的用户信息
@@ -60,6 +78,24 @@ const handleResetPwd = (user: Api.UserAdmin.UserVo) => {
     resetPasswordUser.value = user;
     resetPasswordModalVisible.value = true;
 };
+
+watch(editModalVisible, (visible: boolean) => {
+    if (!visible) {
+        editingUser.value = null;
+    }
+});
+
+watch(viewDrawerVisible, (visible: boolean) => {
+    if (!visible) {
+        viewingUser.value = null;
+    }
+});
+
+watch(resetPasswordModalVisible, (visible: boolean) => {
+    if (!visible) {
+        resetPasswordUser.value = null;
+    }
+});
 </script>
 
 <template>
@@ -79,9 +115,17 @@ const handleResetPwd = (user: Api.UserAdmin.UserVo) => {
                     </a-button>
                 </div>
             </a-card>
-            <a-card :bordered="true" class="search-card"> 搜索框架 </a-card>
+            <a-card :bordered="true" class="search-card">
+                <search-form @search="handleSearch" />
+            </a-card>
             <a-card :bordered="true">
-                <user-table @view="handleViewUser" @edit="handleEditUser" @reset="handleResetPwd" />
+                <user-table
+                    ref="userTableRef"
+                    :search-form="currentSearchForm"
+                    @view="handleViewUser"
+                    @edit="handleEditUser"
+                    @reset="handleResetPwd"
+                />
             </a-card>
             <create-user-modal v-model:visible="createUserModalVisible" @success="refreshTable" />
             <view-user-drawer v-model:visible="viewDrawerVisible" :user="viewingUser" @close="closeDrawer" />

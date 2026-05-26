@@ -14,7 +14,8 @@ export const USER_STATUS = {
 } as const;
 
 // 性别
-export const GENDER = {
-    MALE: 1, // 男
+export const USER_GENDER = {
     FEMALE: 0, // 女
+    MALE: 1, // 男
+    UNKNOWN: 2, // 未知
 } as const;

@@ -28,6 +28,10 @@ import { formatDateTime } from "@/utils/date";
 
 defineOptions({ name: "UserTable" });
 
+const props = defineProps<{
+    searchForm?: Api.UserAdmin.SearchForm;
+}>();
+
 const emit = defineEmits<{
     (event: "view", value: Api.UserAdmin.UserVo): void;
     (event: "edit", value: Api.UserAdmin.UserVo): void;
@@ -89,6 +93,42 @@ const buildRequestPayload = (): Api.UserAdmin.AdminQueryUserRequest => {
         pageNum: pagination.current ?? 1,
         pageSize: pagination.pageSize ?? 10,
     };
+
+    if (props.searchForm) {
+        if (props.searchForm.userAccount !== "") {
+            payload.userAccount = props.searchForm.userAccount;
+        }
+
+        if (props.searchForm.userName !== "") {
+            payload.userName = props.searchForm.userName;
+        }
+
+        if (props.searchForm.userPhone !== "") {
+            payload.userPhone = props.searchForm.userPhone;
+        }
+
+        if (props.searchForm.userEmail !== "") {
+            payload.userEmail = props.searchForm.userEmail;
+        }
+
+        if (props.searchForm.userRole !== undefined) {
+            payload.userRole = props.searchForm.userRole;
+        }
+
+        if (props.searchForm.userGender !== undefined) {
+            payload.userGender = props.searchForm.userGender;
+        }
+
+        if (props.searchForm.userStatus !== undefined) {
+            payload.userStatus = props.searchForm.userStatus;
+        }
+
+        if (props.searchForm.createTimeRange) {
+            payload.createTimeStart = props.searchForm.createTimeRange[0];
+            payload.createTimeEnd = props.searchForm.createTimeRange[1];
+        }
+    }
+
     return payload;
 };
 
@@ -97,7 +137,7 @@ const buildRequestPayload = (): Api.UserAdmin.AdminQueryUserRequest => {
  */
 const fetchUserData = async () => {
     try {
-        const pageData = await useUserOperations().handleAdminGetUserInfoByPage(buildRequestPayload());
+        const pageData = await userOperations.handleAdminGetUserInfoByPage(buildRequestPayload());
         if (pageData !== null) {
             userData.value = pageData.records ?? [];
             pagination.total = pageData.total ?? 0;
@@ -128,7 +168,7 @@ const handleView = async (record: Api.UserAdmin.UserVo) => {
         return;
     }
     // 尝试获取更完整的用户信息以显示在详情抽屉中，如果获取失败则使用当前行的数据
-    const userInfo = await useUserOperations().handleAdminGetUserById(record.id);
+    const userInfo = await userOperations.handleAdminGetUserById(record.id);
     if (userInfo !== null) {
         emit("view", userInfo);
     } else {
@@ -145,7 +185,7 @@ const handleEdit = async (record: Api.UserAdmin.UserVo) => {
         return;
     }
     // 尝试获取更完整的用户信息以显示在详情抽屉中，如果获取失败则使用当前行的数据
-    const userInfo = await useUserOperations().handleAdminGetUserById(record.id);
+    const userInfo = await userOperations.handleAdminGetUserById(record.id);
     if (userInfo !== null) {
         emit("edit", userInfo);
     } else {
@@ -173,7 +213,7 @@ const handleToggleStatus = async (record: Api.UserAdmin.UserVo) => {
         return;
     }
     const nextStatus = record.userStatus === 0 ? 1 : 0;
-    const toggleResult = await useUserOperations().handleAdminBanOrUnbanUser({ id: record.id, userStatus: nextStatus });
+    const toggleResult = await userOperations.handleAdminBanOrUnbanUser({ id: record.id, userStatus: nextStatus });
     if (toggleResult) {
         await fetchUserData();
     }
@@ -187,7 +227,7 @@ const handleDeleteUser = async (record: Api.UserAdmin.UserVo) => {
     if (!record.id) {
         return;
     }
-    const deleteResult = await useUserOperations().handleAdminDeleteUser(record.id);
+    const deleteResult = await userOperations.handleAdminDeleteUser(record.id);
     if (deleteResult) {
         await fetchUserData();
     }
@@ -226,6 +266,25 @@ const handleMoreAction = (key: string, record: Api.UserAdmin.UserVo) => {
             break;
     }
 };
+
+const refreshData = async (resetPage = false) => {
+    if (resetPage) {
+        pagination.current = 1;
+    }
+    await fetchUserData();
+};
+
+defineExpose({
+    refreshData,
+});
+
+watch(
+    () => props.searchForm,
+    () => {
+        pagination.current = 1;
+        fetchUserData();
+    }
+);
 
 onMounted(() => {
     fetchUserData();

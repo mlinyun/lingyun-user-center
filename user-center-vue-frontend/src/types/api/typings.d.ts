@@ -333,17 +333,30 @@ export declare namespace Api {
             userName?: string;
             /** 用户简介 */
             userProfile?: string;
+            /** 用户角色 */
+            userRole?: User.UserRole;
+            /** 性别（0女 1男 2未知） */
+            userGender?: User.UserGender;
             /** 手机号 */
             userPhone?: string;
             /** 邮箱地址 */
             userEmail?: string;
             /** 状态（0正常 1封禁） */
             userStatus?: User.UserStatus;
+            /** 创建起始时间 */
+            createTimeStart?: Common.DateTimeString;
+            /** 创建结束时间 */
+            createTimeEnd?: Common.DateTimeString;
         }
         /** 管理员分页获取用户列表响应数据 */
         type AdminQueryUserResponseData = Common.PageResult<UserVo>;
         /** 管理员分页获取用户列表完整响应体结构 */
         type AdminQueryUserResponse = ApiResponse<AdminQueryUserResponseData>;
+
+        interface SearchForm extends AdminQueryUserRequest {
+            /** 创建时间范围，包含开始和结束时间 */
+            createTimeRange?: [Common.DateTimeString, Common.DateTimeString];
+        }
 
         /** 管理员重置用户密码请求体 */
         type AdminResetUserPwdRequest = {
