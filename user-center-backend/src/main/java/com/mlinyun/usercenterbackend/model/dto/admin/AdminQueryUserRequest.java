@@ -67,6 +67,21 @@ public class AdminQueryUserRequest extends PageRequest implements Serializable {
     private String userProfile;
 
     /**
+     * 用户角色：admin/user.
+     */
+    @Schema(description = "用户角色", example = "user", defaultValue = "user", allowableValues = {"user", "admin"})
+    @Pattern(regexp = UserConstant.ROLE_REGEX, message = UserConstant.ROLE_VALUE_MSG)
+    private String userRole;
+
+    /**
+     * 性别（0女 1男 2未知）.
+     */
+    @Schema(description = "性别（0女 1男 2未知）", example = "2", defaultValue = "2", allowableValues = {"0", "1", "2"})
+    @Min(value = UserConstant.GENDER_MIN, message = UserConstant.GENDER_RANGE_MSG)
+    @Max(value = UserConstant.GENDER_MAX, message = UserConstant.GENDER_RANGE_MSG)
+    private Integer userGender;
+
+    /**
      * 手机号.
      */
     @Schema(description = "手机号", example = "13800000000")

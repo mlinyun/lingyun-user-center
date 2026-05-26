@@ -1082,6 +1082,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Integer userStatus = adminQueryUserRequest.getUserStatus();
         String userName = adminQueryUserRequest.getUserName();
         String userProfile = adminQueryUserRequest.getUserProfile();
+        String userRole = adminQueryUserRequest.getUserRole();
+        Integer userGender = adminQueryUserRequest.getUserGender();
         LocalDateTime createTimeStart = adminQueryUserRequest.getCreateTimeStart();
         LocalDateTime createTimeEnd = adminQueryUserRequest.getCreateTimeEnd();
 
@@ -1091,6 +1093,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 精确查询
         queryWrapper.eq(ObjectUtil.isNotEmpty(userId), BaseFields.ID, userId)
                 .eq(ObjectUtil.isNotEmpty(userAccount), UserFields.USER_ACCOUNT, userAccount)
+                .eq(ObjectUtil.isNotEmpty(userRole), UserFields.USER_ROLE, userRole)
+                .eq(ObjectUtil.isNotEmpty(userGender), UserFields.USER_GENDER, userGender)
                 .eq(ObjectUtil.isNotEmpty(userPhone), UserFields.USER_PHONE, userPhone)
                 .eq(ObjectUtil.isNotEmpty(userEmail), UserFields.USER_EMAIL, userEmail)
                 .eq(ObjectUtil.isNotEmpty(userStatus), UserFields.USER_STATUS, userStatus);
