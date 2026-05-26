@@ -5,55 +5,39 @@
 import { PictureOutlined, UserOutlined } from "@ant-design/icons-vue";
 import { useAuthStore } from "@/stores/auth.ts";
 import { storeToRefs } from "pinia";
-import { ref } from "vue";
 import type { UploadProps } from "ant-design-vue";
-import { messageUtils } from "@/utils/message";
-import { userUploadAvatar } from "@/api/user.ts";
-import { BusinessCode } from "@/constants";
+import { useUserOperations } from "@/composable/user-operations.ts";
 
 defineOptions({ name: "UserAvatar" });
 
-const uploading = ref(false);
 const authStore = useAuthStore();
 // storeToRefs 解构后仍保持响应性
 const { user: loginUser } = storeToRefs(authStore);
 
+const userOperations = useUserOperations();
+
+/**
+ * 处理头像上传
+ *
+ * @param file 选择的文件对象
+ */
 const handleAvatarUpload: UploadProps["beforeUpload"] = async (file) => {
     if (!file) {
         return false;
     }
-
-    const isImage = ["image/jpeg", "image/jpg", "image/png", "image/gif"].includes(file.type);
-    if (!isImage) {
-        messageUtils.error("只支持 JPG、PNG、GIF 格式的图片！");
-        return false;
-    }
-
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-        messageUtils.error("图片大小不能超过 2MB！");
-        return false;
-    }
-
-    if (!loginUser.value?.id) {
-        messageUtils.error("用户信息不存在");
-        return false;
-    }
-
-    uploading.value = true;
     try {
-        const { data } = await userUploadAvatar(file as File);
-        if (data.code === BusinessCode.SUCCESS && data.success) {
+        const avatarUploadResult = await userOperations.handleAvatarUpload(file);
+        if (avatarUploadResult) {
             // 上传成功后刷新用户信息以显示新头像
             await authStore.refreshCurrentUser();
+            return true;
+        } else {
+            return false; // 阻止默认上传行为
         }
     } catch (error) {
         console.error("头像上传失败:", error);
-    } finally {
-        uploading.value = false;
+        return false;
     }
-
-    return false;
 };
 </script>
 
@@ -83,12 +67,12 @@ const handleAvatarUpload: UploadProps["beforeUpload"] = async (file) => {
 
             <a-upload
                 :before-upload="handleAvatarUpload"
-                :disabled="uploading"
+                :disabled="userOperations.uploading.value"
                 :show-upload-list="false"
                 accept="image/*"
             >
                 <a class="avatar-upload-btn">
-                    {{ uploading ? "上传中..." : "更换头像" }}
+                    {{ userOperations.uploading.value ? "上传中..." : "更换头像" }}
                 </a>
             </a-upload>
 

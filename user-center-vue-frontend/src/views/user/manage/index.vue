@@ -28,6 +28,11 @@ const editingUser = ref<Api.UserAdmin.UserVo | null>(null);
 const userTableRef = ref<UserTableExposed>();
 const currentSearchForm = ref<Api.UserAdmin.SearchForm>();
 
+/**
+ * 处理搜索请求，更新当前搜索表单数据
+ *
+ * @param searchForm 搜索表单数据
+ */
 const handleSearch = (searchForm: Api.UserAdmin.SearchForm) => {
     currentSearchForm.value = {
         ...searchForm,

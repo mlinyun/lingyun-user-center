@@ -12,6 +12,7 @@ import {
 import type { Api } from "@/types/api/typings";
 import { BusinessCode } from "@/constants";
 import { messageUtils } from "@/utils/message";
+import { userUploadAvatar } from "@/api/user.ts";
 
 /**
  * 用户操作组合式函数.
@@ -163,7 +164,7 @@ export const useUserOperations = () => {
      * @param file 用户选择的头像文件对象
      * @param userId 当前用户的 ID
      */
-    const handleAvatarUpload = async (file: File, userId: string) => {
+    const handleAvatarUpload = async (file: File, userId?: string) => {
         if (!file) {
             return null;
         }
@@ -180,14 +181,9 @@ export const useUserOperations = () => {
             return null;
         }
 
-        if (!userId) {
-            messageUtils.error("用户信息不存在");
-            return null;
-        }
-
         uploading.value = true;
         try {
-            const { data } = await adminUploadAvatar(file, userId);
+            const { data } = userId ? await adminUploadAvatar(file, userId) : await userUploadAvatar(file);
             if (data.code === BusinessCode.SUCCESS && data.success) {
                 return data.data;
             } else {

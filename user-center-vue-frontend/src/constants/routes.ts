@@ -1,4 +1,5 @@
 // 路由常量
+
 export const ROUTES = {
     // 首页
     HOME: {
@@ -31,6 +32,15 @@ export const ROUTES = {
         name: "manage",
         title: "用户管理",
         icon: "crown",
+        hideInMenu: false,
+        requiresAuth: true,
+        requiresAdmin: true,
+    },
+    HEALTH_CHECK: {
+        path: "/health",
+        name: "health",
+        title: "健康检查",
+        icon: "heart",
         hideInMenu: false,
         requiresAuth: true,
         requiresAdmin: true,

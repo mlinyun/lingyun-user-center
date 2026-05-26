@@ -16,6 +16,8 @@ const UserProfiles = () => import("@views/user/profiles/index.vue");
 const UserSettings = () => import("@views/user/settings/index.vue");
 // 用户管理页面
 const UserManage = () => import("@views/user/manage/index.vue");
+// 健康检查页面
+const HealthCheck = () => import("@views/health/index.vue");
 
 // 认证布局页面组件
 // 用户登录页面
@@ -78,6 +80,18 @@ export const routes: Array<RouteRecordRaw> = [
                     hideInMenu: ROUTES.MANAGE.hideInMenu,
                     requiresAuth: ROUTES.MANAGE.requiresAuth,
                     requiresAdmin: ROUTES.MANAGE.requiresAdmin,
+                },
+            },
+            {
+                path: ROUTES.HEALTH_CHECK.path,
+                name: ROUTES.HEALTH_CHECK.name,
+                component: HealthCheck,
+                meta: {
+                    title: ROUTES.HEALTH_CHECK.title,
+                    icon: ROUTES.HEALTH_CHECK.icon,
+                    hideInMenu: ROUTES.HEALTH_CHECK.hideInMenu,
+                    requiresAuth: ROUTES.HEALTH_CHECK.requiresAuth,
+                    requiresAdmin: ROUTES.HEALTH_CHECK.requiresAdmin,
                 },
             },
         ],

@@ -10,6 +10,7 @@ import {
     UserOutlined,
     SettingOutlined,
     CrownOutlined,
+    HeartOutlined,
 } from "@ant-design/icons-vue";
 import { type RouteRecordRaw, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth.ts";
@@ -32,6 +33,7 @@ const iconMap: Record<string, typeof SmileOutlined> = {
     user: UserOutlined,
     setting: SettingOutlined,
     crown: CrownOutlined,
+    heart: HeartOutlined,
 };
 
 /**

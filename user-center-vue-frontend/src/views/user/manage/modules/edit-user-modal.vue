@@ -77,6 +77,7 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = async (file) => {
         }
     } catch (error) {
         console.error("头像上传失败:", error);
+        return false;
     }
 };
 
