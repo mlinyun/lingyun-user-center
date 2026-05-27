@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS `user`
     isDelete      BIGINT UNSIGNED        DEFAULT 0      NOT NULL COMMENT '逻辑删除（0: 未删除, 时间戳: 删除时间）',
     -- 唯一索引: 确保登录账号、手机号、邮箱地址的唯一性
     UNIQUE KEY uk_userAccount (userAccount, isDelete) COMMENT '登录账号和删除状态复合唯一索引',
-    UNIQUE KEY uk_userPhone (userPhone) COMMENT '手机号唯一索引',
-    UNIQUE KEY uk_userEmail (userEmail) COMMENT '邮箱地址唯一索引',
+    UNIQUE KEY uk_userPhone (userPhone, isDelete) COMMENT '手机号和删除状态复合唯一索引',
+    UNIQUE KEY uk_userEmail (userEmail, isDelete) COMMENT '邮箱地址和删除状态复合唯一索引',
     -- 普通索引: 优化查询性能
     INDEX idx_userName (userName) COMMENT '用户昵称索引'
 )
