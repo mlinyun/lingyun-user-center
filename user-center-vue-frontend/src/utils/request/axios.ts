@@ -194,6 +194,34 @@ axiosInstance.interceptors.response.use(
 let isRedirectingToLogin = false;
 
 /**
+ * 认证失效消息防抖锁，避免并发 401 触发重复提示.
+ */
+let isAuthExpiredNotified = false;
+let authExpiredNotifyTimer: ReturnType<typeof setTimeout> | null = null;
+const AUTH_EXPIRED_NOTIFY_COOLDOWN_MS = 2000;
+
+const tryNotifyAuthExpired = (errorMessage: string): void => {
+    if (isAuthExpiredNotified) {
+        return;
+    }
+    isAuthExpiredNotified = true;
+
+    const msgConfig: MessageConfig = {
+        useNotification: true,
+        message: "认证失效",
+    };
+    messageUtils.error(errorMessage || "登录状态已失效，请重新登录！", msgConfig);
+
+    if (authExpiredNotifyTimer) {
+        clearTimeout(authExpiredNotifyTimer);
+    }
+    authExpiredNotifyTimer = setTimeout(() => {
+        isAuthExpiredNotified = false;
+        authExpiredNotifyTimer = null;
+    }, AUTH_EXPIRED_NOTIFY_COOLDOWN_MS);
+};
+
+/**
  * 认证失效统一处理：通知用户、清理鉴权状态、重定向到登录页
  *
  * - 已处于登录页时不再重复跳转，并将当前路径作为 redirect 参数保留
@@ -205,12 +233,7 @@ let isRedirectingToLogin = false;
  */
 const handleAuthExpired = async (errorMessage: string, shouldShowError: boolean): Promise<void> => {
     if (shouldShowError) {
-        // 使用 Notification 组件显示认证失效消息，提示用户重新登录
-        const msgConfig: MessageConfig = {
-            useNotification: true,
-            message: "认证失效",
-        };
-        messageUtils.error(errorMessage || "登录状态已失效，请重新登录！", msgConfig);
+        tryNotifyAuthExpired(errorMessage);
     }
     if (isRedirectingToLogin) {
         return;
