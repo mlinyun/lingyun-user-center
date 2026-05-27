@@ -67,6 +67,7 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -114,6 +115,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 注册成功的用户 ID
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String userRegister(UserRegisterRequest userRegisterRequest) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userRegisterRequest), ErrorCode.PARAMS_ERROR, "用户注册请求体不能为空");
@@ -139,6 +141,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 注册成功的用户 ID
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String userEmailRegister(UserEmailRegisterRequest userEmailRegisterRequest) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailRegisterRequest), ErrorCode.PARAMS_ERROR, "邮箱注册请求体不能为空");
@@ -168,6 +171,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 注册成功的用户 ID
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String userPhoneRegister(UserPhoneRegisterRequest userPhoneRegisterRequest) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneRegisterRequest), ErrorCode.PARAMS_ERROR, "手机号注册请求体不能为空");
@@ -411,6 +415,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 用户绑定或换绑邮箱是否成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean userBindEmail(UserBindEmailRequest userBindEmailRequest, HttpServletRequest request) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userBindEmailRequest), ErrorCode.PARAMS_ERROR, "绑定邮箱请求体不能为空");
@@ -448,6 +453,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 用户绑定或换绑手机号是否成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean userBindPhone(UserBindPhoneRequest userBindPhoneRequest, HttpServletRequest request) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userBindPhoneRequest), ErrorCode.PARAMS_ERROR, "绑定手机号请求体不能为空");
@@ -576,6 +582,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 是否更新成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean userUpdateInfo(UserUpdateInfoRequest userUpdateInfoRequest, HttpServletRequest request) {
         // 1. 参数校验（通过 @Valid 注解在 Controller 层已完成大部分校验）
         if (ObjectUtil.isEmpty(userUpdateInfoRequest)) {
@@ -639,6 +646,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 是否更新成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean userUpdatePwd(UserUpdatePwdRequest userUpdatePwdRequest, HttpServletRequest request) {
         // 1. 参数校验（通过 @Valid 注解在 Controller 层已完成大部分校验）
         if (ObjectUtil.isEmpty(userUpdatePwdRequest)) {
@@ -701,6 +709,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 是否重置成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean userEmailResetPwd(UserEmailResetPwdRequest userEmailResetPwdRequest, HttpServletRequest request) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailResetPwdRequest), ErrorCode.PARAMS_ERROR, "用户邮箱重置密码请求不能为空");
@@ -728,6 +737,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 是否重置成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean userPhoneResetPwd(UserPhoneResetPwdRequest userPhoneResetPwdRequest, HttpServletRequest request) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneResetPwdRequest), ErrorCode.PARAMS_ERROR, "用户手机号重置密码请求不能为空");
@@ -930,6 +940,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 添加成功的用户 ID
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String adminAddUser(AdminAddUserRequest adminAddUserRequest) {
         // 1. 基本参数校验（通过 @Valid 注解在 Controller 层已完成大部分校验）
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminAddUserRequest), ErrorCode.PARAMS_ERROR, "管理员添加用户请求不能为空");
@@ -1013,6 +1024,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 是否删除成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean adminDeleteUserById(GetOrDeleteRequest adminDeleteUserRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminDeleteUserRequest), ErrorCode.PARAMS_ERROR, "用户获取或删除请求不能为空");
         Long userId = adminDeleteUserRequest.getId();
@@ -1029,6 +1041,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 是否更新成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean adminUpdateUserInfo(AdminUpdateUserInfoRequest adminUpdateUserInfoRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminUpdateUserInfoRequest), ErrorCode.PARAMS_ERROR, "用户信息更新请求不能为空");
         // 通过用户 ID 检查用户是否存在
@@ -1163,6 +1176,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 是否重置成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean adminResetUserPassword(AdminResetUserPwdRequest adminResetUserPwdRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminResetUserPwdRequest), ErrorCode.PARAMS_ERROR, "用户密码重置请求不能为空");
         // 检查用户是否存在
@@ -1196,6 +1210,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 是否操作成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean adminBanOrUnbanUser(AdminBanUserRequest adminBanUserRequest) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminBanUserRequest), ErrorCode.PARAMS_ERROR, "用户封禁或解封请求不能为空");
