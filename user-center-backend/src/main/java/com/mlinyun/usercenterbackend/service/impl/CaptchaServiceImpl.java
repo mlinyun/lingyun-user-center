@@ -16,10 +16,12 @@ import com.mlinyun.usercenterbackend.service.EmailService;
 import com.mlinyun.usercenterbackend.service.SmsService;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 /**
@@ -37,6 +39,29 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaLogMapper, CaptchaLog
      * 生成验证码的随机数生成器，使用 SecureRandom 提供更强的随机性保障.
      */
     private static final SecureRandom RANDOM = new SecureRandom();
+
+    /**
+     * Lua 脚本：原子递增计数器并在首次创建时设置 TTL.
+     *
+     * <p>
+     * 解决 {@code INCR} + 条件 {@code EXPIRE} 非原子执行导致的 Key 永久堆积风险。 当 {@code INCR} 返回 1（说明是新 Key）时自动设置过期时间，全程在 Redis
+     * 单线程中原子完成。
+     * </p>
+     *
+     * <ul>
+     * <li>KEYS[1] = 计数器 Key</li>
+     * <li>ARGV[1] = 过期时间（秒）</li>
+     * <li>返回值 = 递增后的计数值</li>
+     * </ul>
+     */
+    private static final DefaultRedisScript<Long> INCR_WITH_TTL_SCRIPT;
+
+    static {
+        INCR_WITH_TTL_SCRIPT = new DefaultRedisScript<>();
+        INCR_WITH_TTL_SCRIPT.setScriptText("local count = redis.call('INCR', KEYS[1]) " + "if count == 1 then "
+                + "  redis.call('EXPIRE', KEYS[1], ARGV[1]) " + "end " + "return count");
+        INCR_WITH_TTL_SCRIPT.setResultType(Long.class);
+    }
 
     /**
      * Redis 字符串模板.
@@ -76,18 +101,23 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaLogMapper, CaptchaLog
      */
     @Override
     public void sendCaptcha(CaptchaTypeEnum type, CaptchaSceneEnum scene, String target, String ipAddress) {
-        // 1. 检查 60 秒发送锁（防止短时间内重复发送）
+        // 1. 原子操作：尝试获取 60 秒发送锁（SET NX EX，防止并发越锁）
+        // setIfAbsent 等价于 Redis 的 SET key value NX EX，在单条命令中完成"检查是否存在 + 加锁"，
+        // 彻底消除先 hasKey() 再 set() 之间的竞态窗口
         String lockKey = buildLockKey(type, target);
-        Boolean locked = redisTemplate.hasKey(lockKey);
-        if (Boolean.TRUE.equals(locked)) {
+        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", CaptchaConstant.LOCK_TTL_SECONDS,
+                TimeUnit.SECONDS);
+        if (Boolean.FALSE.equals(acquired)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, CaptchaConstant.CODE_SEND_TOO_FREQUENT);
         }
 
-        // 2. 检查小时级限流（同一目标每小时最多 5 次）
+        // 2. 原子操作：小时级限流计数（Lua 脚本保证 INCR + EXPIRE 原子执行）
+        // 使用 Lua 脚本将递增计数和设置 TTL 合并为原子操作，
+        // 避免 increment() 后、expire() 前进程崩溃导致 Key 永久堆积
         String limitKey = buildLimitKey(type, target);
-        String limitVal = redisTemplate.opsForValue().get(limitKey);
-        int count = (limitVal != null) ? Integer.parseInt(limitVal) : 0;
-        if (count >= CaptchaConstant.LIMIT_MAX_COUNT) {
+        Long count = redisTemplate.execute(INCR_WITH_TTL_SCRIPT, Collections.singletonList(limitKey),
+                String.valueOf(CaptchaConstant.LIMIT_WINDOW_SECONDS));
+        if (count != null && count > CaptchaConstant.LIMIT_MAX_COUNT) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, CaptchaConstant.CODE_SEND_LIMIT_EXCEEDED);
         }
 
@@ -97,15 +127,6 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaLogMapper, CaptchaLog
         // 4. 存储验证码到 Redis（带 5 分钟 TTL）
         String captchaKey = buildCaptchaKey(scene, type, target);
         redisTemplate.opsForValue().set(captchaKey, code, CaptchaConstant.CODE_TTL_SECONDS, TimeUnit.SECONDS);
-
-        // 5. 设置 60 秒发送锁
-        redisTemplate.opsForValue().set(lockKey, "1", CaptchaConstant.LOCK_TTL_SECONDS, TimeUnit.SECONDS);
-
-        // 6. 更新小时级发送计数
-        redisTemplate.opsForValue().increment(limitKey);
-        if (count == 0) {
-            redisTemplate.expire(limitKey, CaptchaConstant.LIMIT_WINDOW_SECONDS, TimeUnit.SECONDS);
-        }
 
         // 7. 清除之前的验证次数计数
         String attemptKey = buildAttemptKey(scene, type, target);
@@ -137,24 +158,19 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaLogMapper, CaptchaLog
      */
     @Override
     public void verifyCaptchaOrThrow(CaptchaTypeEnum type, CaptchaSceneEnum scene, String target, String code) {
-        // 1. 检查验证次数是否超限
-        String attemptKey = buildAttemptKey(scene, type, target);
-        String attemptVal = redisTemplate.opsForValue().get(attemptKey);
-        int attempts = (attemptVal != null) ? Integer.parseInt(attemptVal) : 0;
-        if (attempts >= CaptchaConstant.MAX_VERIFY_ATTEMPTS) {
-            invalidateCaptcha(type, scene, target);
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, CaptchaConstant.CODE_ATTEMPTS_EXCEEDED);
-        }
-
-        // 2. 获取 Redis 中存储的验证码
+        // 1. 获取 Redis 中存储的验证码
         String captchaKey = buildCaptchaKey(scene, type, target);
+        String attemptKey = buildAttemptKey(scene, type, target);
         String storedCode = redisTemplate.opsForValue().get(captchaKey);
 
         if (storedCode == null || !storedCode.equals(code)) {
-            // 验证失败，递增验证次数
-            redisTemplate.opsForValue().increment(attemptKey);
-            if (attempts == 0) {
-                redisTemplate.expire(attemptKey, CaptchaConstant.CODE_TTL_SECONDS, TimeUnit.SECONDS);
+            // 验证失败：原子递增验证次数（Lua 脚本保证 INCR + EXPIRE 原子执行）
+            Long attempts = redisTemplate.execute(INCR_WITH_TTL_SCRIPT, Collections.singletonList(attemptKey),
+                    String.valueOf(CaptchaConstant.CODE_TTL_SECONDS));
+            // 如果验证次数达到上限，立即失效验证码
+            if (attempts != null && attempts >= CaptchaConstant.MAX_VERIFY_ATTEMPTS) {
+                invalidateCaptcha(type, scene, target);
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, CaptchaConstant.CODE_ATTEMPTS_EXCEEDED);
             }
             throw new BusinessException(ErrorCode.PARAMS_ERROR, CaptchaConstant.CODE_INVALID);
         }
