@@ -715,7 +715,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 3. 复用核心重置密码逻辑（校验密码、查询用户、检查用户状态、加密新密码、执行更新）
         return coreResetPwd(CaptchaTypeEnum.EMAIL, userEmail, newPassword, checkPassword,
-                UserConstant.EMAIL_NOT_BOUND_MSG, UserConstant.RESET_BOUND_EMAIL_MSG, request);
+                UserConstant.EMAIL_NOT_BOUND_MSG, request);
     }
 
     /**
@@ -742,7 +742,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 3. 复用核心重置密码逻辑
         return coreResetPwd(CaptchaTypeEnum.SMS, userPhone, newPassword, checkPassword,
-                UserConstant.PHONE_NOT_BOUND_MSG, UserConstant.RESET_BOUND_PHONE_MSG, request);
+                UserConstant.PHONE_NOT_BOUND_MSG, request);
     }
 
     /**
@@ -753,25 +753,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param newPassword 新密码
      * @param checkPassword 确认密码
      * @param notBoundMsg 用户未绑定联系方式时的异常信息
-     * @param resetBySelfMsg 用户请求重置的联系方式与登录用户绑定的联系方式不匹配时的异常信息
      * @param request HTTP 请求对象
      * @return 是否重置成功
      */
     private boolean coreResetPwd(CaptchaTypeEnum type, String field, String newPassword, String checkPassword,
-            String notBoundMsg, String resetBySelfMsg, HttpServletRequest request) {
-        // 1. 获取当前登录用户（可能会抛出未登录异常）
-        User loginUser = this.getLoginUser(request);
-
-        // 2. 根据验证码类型校验用户的联系方式是否符合要求（必须已绑定且与请求参数一致）
-        if (CaptchaTypeEnum.EMAIL.equals(type)) {
-            String loginUserEmail = loginUser.getUserEmail();
-            ThrowUtils.throwIf(ObjectUtil.isEmpty(loginUserEmail), ErrorCode.PARAMS_ERROR, notBoundMsg);
-            ThrowUtils.throwIf(!loginUserEmail.equals(field), ErrorCode.PARAMS_ERROR, resetBySelfMsg);
-        } else if (CaptchaTypeEnum.SMS.equals(type)) {
-            String loginUserPhone = loginUser.getUserPhone();
-            ThrowUtils.throwIf(ObjectUtil.isEmpty(loginUserPhone), ErrorCode.PARAMS_ERROR, notBoundMsg);
-            ThrowUtils.throwIf(!loginUserPhone.equals(field), ErrorCode.PARAMS_ERROR, resetBySelfMsg);
-        }
+            String notBoundMsg, HttpServletRequest request) {
+        // 1. 根据传入且已经过验证码核验的 field（邮箱或手机号）直接反查用户，而非依赖当前 Session 登录态中的用户信息，避免用户未登录或登录态过期导致无法重置密码
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        String column = CaptchaTypeEnum.EMAIL.equals(type) ? UserFields.USER_EMAIL : UserFields.USER_PHONE;
+        User user = this.getOne(queryWrapper.eq(column, field));
+        ThrowUtils.throwIf(ObjectUtil.isEmpty(user), ErrorCode.PARAMS_ERROR, notBoundMsg);
 
         // 3.校验新密码和确认密码是否一致
         ThrowUtils.throwIf(!newPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR,
@@ -782,13 +773,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.CREDENTIAL_FORMAT_MSG);
 
         // 5. 判断用户是否被禁用
-        boolean banned = UserStatusEnum.isBanned(loginUser.getUserStatus());
+        boolean banned = UserStatusEnum.isBanned(user.getUserStatus());
         ThrowUtils.throwIf(banned, ErrorCode.FORBIDDEN_ERROR, UserConstant.ACCOUNT_BANNED_MSG);
 
         // 6. 加密并在数据库中执行密码更新
         String encryptedNewPassword = PasswordUtils.encrypt(newPassword);
         User updateUser = new User();
-        updateUser.setId(loginUser.getId());
+        updateUser.setId(user.getId());
         updateUser.setUserPassword(encryptedNewPassword);
         // 修改用户密码后需要更新编辑时间
         updateUser.setEditTime(LocalDateTime.now());
