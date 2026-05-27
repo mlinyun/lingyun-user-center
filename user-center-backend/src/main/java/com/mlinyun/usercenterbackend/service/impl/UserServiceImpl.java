@@ -52,6 +52,9 @@ import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
 import jakarta.servlet.http.HttpServletRequest;
 import java.beans.PropertyDescriptor;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -908,9 +911,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 删除临时文件
         try {
-            file.deleteOnExit();
-        } catch (Exception e) {
-            log.error("临时文件删除失败，文件路径 = {}, 错误信息：{}", file.getAbsolutePath(), e.getMessage());
+            Files.delete(file.toPath());
+        } catch (NoSuchFileException _) {
+            // 文件本就不存在，无需处理
+            log.warn("临时文件不存在，无需删除，文件路径 = {}", file.getAbsolutePath());
+        } catch (IOException e) {
+            // 涵盖 AccessDeniedException、FileSystemException 等所有 IO 异常
+            log.error("临时文件删除失败，文件路径 = {}，原因：{}", file.getAbsolutePath(), e.getMessage());
         }
     }
     // endregion
