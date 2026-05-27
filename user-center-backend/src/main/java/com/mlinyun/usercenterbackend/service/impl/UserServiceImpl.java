@@ -23,6 +23,7 @@ import com.mlinyun.usercenterbackend.exception.BusinessException;
 import com.mlinyun.usercenterbackend.exception.ThrowUtils;
 import com.mlinyun.usercenterbackend.manager.CosManager;
 import com.mlinyun.usercenterbackend.mapper.UserMapper;
+import com.mlinyun.usercenterbackend.model.converter.UserConverter;
 import com.mlinyun.usercenterbackend.model.dto.admin.AdminAddUserRequest;
 import com.mlinyun.usercenterbackend.model.dto.admin.AdminBanUserRequest;
 import com.mlinyun.usercenterbackend.model.dto.admin.AdminQueryUserRequest;
@@ -50,21 +51,15 @@ import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
 import jakarta.servlet.http.HttpServletRequest;
-import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,15 +91,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final CosManager cosManager;
 
     /**
+     * 用户模型转换器.
+     */
+    private final UserConverter userConverter;
+
+    /**
      * 构造函数，注入 CaptchaService.
      *
      * @param captchaService {@linkplain CaptchaService 验证码服务实例}
+     * @param cosClientConfig {@linkplain CosClientConfig 腾讯云 COS 配置}
+     * @param cosManager {@linkplain CosManager 对象存储服务管理器}
+     * @param userConverter {@linkplain UserConverter 用户模型转换器}
      */
     @Autowired
-    public UserServiceImpl(CaptchaService captchaService, CosClientConfig cosClientConfig, CosManager cosManager) {
+    public UserServiceImpl(CaptchaService captchaService, CosClientConfig cosClientConfig, CosManager cosManager,
+            UserConverter userConverter) {
         this.captchaService = captchaService;
         this.cosClientConfig = cosClientConfig;
         this.cosManager = cosManager;
+        this.userConverter = userConverter;
     }
 
     // region 用户服务
@@ -402,9 +407,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user == null) {
             return null;
         }
-        UserLoginVo userLoginVo = new UserLoginVo();
-        BeanUtils.copyProperties(user, userLoginVo);
-        return userLoginVo;
+        return userConverter.toUserLoginVo(user);
     }
 
     /**
@@ -596,17 +599,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Long userId = loginUser.getId();
         ThrowUtils.throwIf(!userId.equals(userUpdateInfoRequest.getId()), ErrorCode.NOT_AUTH_ERROR, "无权限更新他人信息");
 
-        // 4. 构建更新实体
-        User updateUser = new User();
-        // DTO 中某些可选字段为 null，直接拷贝会把数据库实体中的原值覆盖为 null
-        // 可先收集 DTO 中为 null 的属性名，然后传给 copyProperties 的忽略参数
-        String[] ignore = this.getNullPropertyNames(userUpdateInfoRequest);
-        BeanUtils.copyProperties(userUpdateInfoRequest, updateUser, ignore);
+        // 4. 只更新允许修改的字段，且不覆盖未传递的字段
+        userConverter.updateUserFromRequest(userUpdateInfoRequest, loginUser);
         // 修改用户用户信息后需要更新编辑时间
-        updateUser.setEditTime(LocalDateTime.now());
+        loginUser.setEditTime(LocalDateTime.now());
 
         // 5. 执行更新
-        boolean updateResult = this.updateById(updateUser);
+        boolean updateResult = this.updateById(loginUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, "用户信息更新失败，数据库更新异常");
 
         // 6. 重新从数据库获取最新的用户信息，再更新 Session，保证数据一致性
@@ -615,27 +614,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 7. 返回更新结果
         return true;
-    }
-
-    /**
-     * 获取对象中值为 null 的属性名称数组.
-     *
-     * @param source 源对象
-     * @return 值为 null 的属性名称数组
-     */
-    private String[] getNullPropertyNames(Object source) {
-        final BeanWrapper src = new BeanWrapperImpl(source);
-        java.beans.PropertyDescriptor[] pds = src.getPropertyDescriptors();
-
-        Set<String> emptyNames = new HashSet<>();
-        for (PropertyDescriptor pd : pds) {
-            Object srcValue = src.getPropertyValue(pd.getName());
-            if (srcValue == null) {
-                emptyNames.add(pd.getName());
-            }
-        }
-        String[] result = new String[emptyNames.size()];
-        return emptyNames.toArray(result);
     }
 
     /**
@@ -967,11 +945,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String encryptedPassword = PasswordUtils.encrypt(userPassword);
 
         // 4. 构建新用户实体
-        User newUser = new User();
-        // DTO 中某些可选字段为 null，直接拷贝会把数据库实体中的原值覆盖为 null
-        // 可先收集 DTO 中为 null 的属性名，然后传给 copyProperties 的忽略参数
-        String[] ignore = this.getNullPropertyNames(adminAddUserRequest);
-        BeanUtils.copyProperties(adminAddUserRequest, newUser, ignore);
+        User newUser = userConverter.toUserFromAdminAdd(adminAddUserRequest);
         newUser.setUserPassword(encryptedPassword); // 设置加密后的密码
         // 如果未设置昵称，则使用登录账号作为默认昵称
         if (newUser.getUserName() == null) {
@@ -1012,9 +986,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public UserVo adminGetUserById(GetOrDeleteRequest adminGetUserRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminGetUserRequest), ErrorCode.PARAMS_ERROR, "用户获取或删除请求不能为空");
         User user = this.getUserByIdAndThrow(adminGetUserRequest.getId());
-        UserVo userVo = new UserVo();
-        BeanUtils.copyProperties(user, userVo);
-        return userVo;
+        return userConverter.toUserVo(user);
     }
 
     /**
@@ -1045,13 +1017,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean adminUpdateUserInfo(AdminUpdateUserInfoRequest adminUpdateUserInfoRequest) {
         ThrowUtils.throwIf(ObjectUtil.isEmpty(adminUpdateUserInfoRequest), ErrorCode.PARAMS_ERROR, "用户信息更新请求不能为空");
         // 通过用户 ID 检查用户是否存在
-        this.getUserByIdAndThrow(adminUpdateUserInfoRequest.getId());
-        // 构建更新实体
-        User updateUser = new User();
-        String[] ignore = getNullPropertyNames(adminUpdateUserInfoRequest);
-        BeanUtils.copyProperties(adminUpdateUserInfoRequest, updateUser, ignore);
+        User user = this.getUserByIdAndThrow(adminUpdateUserInfoRequest.getId());
+        // 只更新允许修改的字段，且不覆盖未传递的字段
+        userConverter.updateUserFromAdminRequest(adminUpdateUserInfoRequest, user);
         // 执行更新
-        boolean updateResult = this.updateById(updateUser);
+        boolean updateResult = this.updateById(user);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "用户信息更新失败，数据库更新异常");
         return true;
     }
@@ -1071,7 +1041,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 this.page(new Page<>(pageNum, pageSize), this.buildUserQueryWrapper(adminQueryUserRequest));
         // 将 User 实体转换为 UserVO 视图对象
         Page<UserVo> userVoPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
-        List<UserVo> userVoList = this.getUserVoList(userPage.getRecords());
+        List<UserVo> userVoList = userConverter.toUserVoList(userPage.getRecords());
         userVoPage.setRecords(userVoList);
         return userVoPage;
     }
@@ -1151,22 +1121,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user == null) {
             return null;
         }
-        UserVo userVo = new UserVo();
-        BeanUtils.copyProperties(user, userVo);
-        return userVo;
-    }
-
-    /**
-     * 将用户实体列表转换为用户视图对象列表.
-     *
-     * @param userList 用户实体列表
-     * @return 用户视图对象列表
-     */
-    private List<UserVo> getUserVoList(List<User> userList) {
-        if (ObjectUtil.isEmpty(userList)) {
-            return new ArrayList<>();
-        }
-        return userList.stream().map(this::getUserVo).toList();
+        return userConverter.toUserVo(user);
     }
 
     /**
