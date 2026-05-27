@@ -2,7 +2,7 @@
 /**
  * 主布局侧边栏组件.
  */
-import { ref, h, computed } from "vue";
+import { h, computed } from "vue";
 import {
     MenuUnfoldOutlined,
     MenuFoldOutlined,
@@ -14,16 +14,15 @@ import {
 } from "@ant-design/icons-vue";
 import { type RouteRecordRaw, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth.ts";
+import { useLayoutStore } from "@/stores/layout.ts";
 import type { MenuProps } from "ant-design-vue";
 import { routes } from "@/router/routes.ts";
 
 defineOptions({ name: "MainSidebar" });
 
-// 侧边栏折叠状态
-const collapsed = ref(false);
-
 const router = useRouter();
 const authStore = useAuthStore();
+const layoutStore = useLayoutStore();
 
 /**
  * 图标映射
@@ -85,6 +84,14 @@ const selectedKeys = computed(() => [router.currentRoute.value.name as string]);
 const handleMenuClick = ({ key }: { key: string }) => {
     router.push({ name: key });
 };
+
+/**
+ * 侧边栏折叠状态绑定
+ */
+const collapsed = computed({
+    get: () => layoutStore.sidebarCollapsed,
+    set: (value: boolean) => layoutStore.setSidebarCollapsed(value),
+});
 </script>
 
 <template>
