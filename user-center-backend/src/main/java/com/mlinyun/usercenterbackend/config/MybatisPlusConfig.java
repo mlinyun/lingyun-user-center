@@ -25,10 +25,14 @@ public class MybatisPlusConfig {
      */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        // 添加分页插件，指定数据库类型为 MySQL
+        PaginationInnerInterceptor paginationInterceptor = new PaginationInnerInterceptor();
+        paginationInterceptor.setDbType(DbType.MYSQL);
+        paginationInterceptor.setOverflow(true); // 设置当请求页码超过总页数时，自动返回第一页数据
+        paginationInterceptor.setMaxLimit(200L); // 设置单页最大记录数为 200，防止一次查询过多数据导致性能问题
         // 创建 MyBatis-Plus 拦截器实例，用于注册各种内部拦截器
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        // 添加分页插件，指定数据库类型为 MySQL
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        interceptor.addInnerInterceptor(paginationInterceptor);
         // 返回配置好的拦截器实例，将由Spring容器管理
         return interceptor;
     }

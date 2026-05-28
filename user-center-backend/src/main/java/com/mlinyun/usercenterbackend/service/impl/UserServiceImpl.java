@@ -407,15 +407,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param request {@linkplain HttpServletRequest HTTP 请求对象}
      */
     private void renewSession(HttpServletRequest request) {
-        HttpSession session = request.getSession();
         try {
             request.changeSessionId();
-        } catch (Exception _) {
+        } catch (Exception e) {
+            log.warn("changeSessionId 失败，尝试重建 Session", e);
             try {
-                session.invalidate();
-                request.getSession(true);
-            } catch (IllegalStateException _) {
-                // ignore invalidated session
+                request.getSession(false).invalidate();
+            } catch (IllegalStateException ex) {
+                log.error("Session 重建失败，登录中止", ex);
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "会话安全操作失败");
             }
         }
     }
@@ -919,7 +919,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         updateUser.setUserAvatar(avatarUrl);
         updateUser.setEditTime(LocalDateTime.now());
         boolean updateResult = this.updateById(updateUser);
-        ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, "头像更新失败，数据库更新异常");
+        if (!updateResult) {
+            // 清理 COS 中已上传的图片，避免垃圾数据
+            try {
+                cosManager.deleteObject(objectKey);
+                log.info("用户头像上传失败，已删除 COS 中的图片, objectKey={}", objectKey);
+            } catch (Exception e) {
+                log.error("用户头像上传失败，数据库更新异常，删除 COS 中的图片失败, objectKey={}", objectKey, e);
+            }
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "头像更新失败，数据库更新异常");
+        }
 
         // 6. 返回头像 URL
         return avatarUrl;
@@ -1206,7 +1215,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean updateResult = this.updateById(updateUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "用户封禁或解封失败，数据库更新异常");
 
-        // 5. 返回操作结果
+        // 5. 如果是封禁用户，则主动使该用户的已有会话失效（强制用户退出登录）
+        if (UserStatusEnum.isBanned(userStatus)) {
+            expireUserSessions(userId);
+        }
+
+        // 6. 返回操作结果
         return true;
     }
 

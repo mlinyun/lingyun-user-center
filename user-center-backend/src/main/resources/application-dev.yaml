@@ -6,7 +6,6 @@ spring:
     url: ${MYSQL_DATABASE_URL}
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
       host: ${REDIS_HOST}
@@ -40,7 +39,11 @@ cos:
 
 logging:
   level:
-    root: info
+    root: debug
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 knife4j:
   production: false

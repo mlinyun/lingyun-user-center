@@ -2,7 +2,9 @@ package com.mlinyun.usercenterbackend.utils;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.crypto.digest.BCrypt;
+import com.mlinyun.usercenterbackend.common.ErrorCode;
 import com.mlinyun.usercenterbackend.constant.user.UserConstant;
+import com.mlinyun.usercenterbackend.exception.BusinessException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -129,7 +131,7 @@ public final class PasswordUtils {
             return encrypted;
         } catch (Exception e) {
             log.error("密码加密异常", e);
-            throw new RuntimeException("密码加密失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "密码加密失败");
         }
     }
 

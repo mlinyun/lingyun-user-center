@@ -43,8 +43,9 @@ public class Knife4jConfig {
         contact.setName("mlinyun");
         contact.setUrl("https://github.com/mlinyun");
         return new Info().title("凌云用户中心系统API文档")
-                .description("企业核心的用户中心系统，基于 Spring Boot 后端 + React 前端的 **全栈项目**，实现了用户注册、登录、查询等基础功能。").version("v1.0.0")
-                .contact(contact).license(new License().name("MIT License").url("https://mit-license.org/"));
+                .description("企业核心的用户中心系统，基于 Spring Boot 后端 + React/Vue 前端的 **全栈项目**，实现了用户注册、登录、查询等基础功能。")
+                .version("v1.0.0").contact(contact)
+                .license(new License().name("MIT License").url("https://mit-license.org/"));
     }
 
     /**
