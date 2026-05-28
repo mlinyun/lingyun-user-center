@@ -5,10 +5,10 @@
 import { onMounted, ref } from "vue";
 import { useAuthStore } from "@/stores/auth.ts";
 import { storeToRefs } from "pinia";
-import UserAvatar from "@views/user/settings/moudels/user-avatar.vue";
-import PasswordManagement from "@views/user/settings/moudels/password-management.vue";
-import BasicInfo from "@views/user/settings/moudels/basic-info.vue";
-import AccountSecurity from "@views/user/settings/moudels/account-security.vue";
+import UserAvatar from "@views/user/settings/modules/user-avatar.vue";
+import PasswordManagement from "@views/user/settings/modules/password-management.vue";
+import BasicInfo from "@views/user/settings/modules/basic-info.vue";
+import AccountSecurity from "@views/user/settings/modules/account-security.vue";
 
 defineOptions({ name: "UserSettings" });
 
