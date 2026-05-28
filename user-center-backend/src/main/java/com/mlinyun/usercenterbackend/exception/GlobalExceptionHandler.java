@@ -4,6 +4,7 @@ import com.mlinyun.usercenterbackend.common.BaseResponse;
 import com.mlinyun.usercenterbackend.common.ErrorCode;
 import com.mlinyun.usercenterbackend.common.ResultUtils;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -89,6 +90,22 @@ public class GlobalExceptionHandler {
         log.error("MethodArgumentNotValidException: message={}", e.getMessage());
         // 提取校验错误信息
         String errorMessage = e.getBindingResult().getAllErrors().getFirst().getDefaultMessage();
+        // 返回错误响应
+        return ResultUtils.error(ErrorCode.PARAMS_ERROR, errorMessage);
+    }
+
+    /**
+     * 处理参数约束校验异常.
+     *
+     * @param e 处理参数约束校验异常
+     * @return 统一格式的错误响应
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public BaseResponse<Object> handleConstraintViolationException(ConstraintViolationException e) {
+        // 记录异常信息
+        log.error("ConstraintViolationException: message={}", e.getMessage());
+        // 提取校验错误信息
+        String errorMessage = e.getConstraintViolations().iterator().next().getMessage();
         // 返回错误响应
         return ResultUtils.error(ErrorCode.PARAMS_ERROR, errorMessage);
     }

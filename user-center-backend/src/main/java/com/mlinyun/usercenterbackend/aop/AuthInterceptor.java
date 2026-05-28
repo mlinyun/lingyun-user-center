@@ -4,7 +4,7 @@ import com.mlinyun.usercenterbackend.annotation.AuthCheck;
 import com.mlinyun.usercenterbackend.common.ErrorCode;
 import com.mlinyun.usercenterbackend.constant.user.UserRoleEnum;
 import com.mlinyun.usercenterbackend.exception.BusinessException;
-import com.mlinyun.usercenterbackend.model.entity.User;
+import com.mlinyun.usercenterbackend.model.vo.user.UserLoginVo;
 import com.mlinyun.usercenterbackend.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -59,7 +59,7 @@ public class AuthInterceptor {
         }
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
         // 获取登录用户信息
-        User loginUser = userService.getLoginUser(request);
+        UserLoginVo loginUser = userService.getLoginUserInfo(request);
         // 判断是否需要权限校验
         UserRoleEnum mustRoleEnum = UserRoleEnum.getRoleEnumByValue(mustRole);
         // 如果不需要权限校验，则直接放行

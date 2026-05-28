@@ -154,8 +154,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String userEmailRegister(UserEmailRegisterRequest userEmailRegisterRequest) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailRegisterRequest), ErrorCode.PARAMS_ERROR, "邮箱注册请求体不能为空");
         // 1. 获取请求体中的参数
         String userEmail = userEmailRegisterRequest.getUserEmail();
         String captchaCode = userEmailRegisterRequest.getCaptchaCode();
@@ -396,10 +394,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 3. 记录用户登录状态
         HttpSession session = request.getSession();
         session.setAttribute(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, loginUser.getId().toString());
-        session.setAttribute(UserConstant.USER_LOGIN_STATE, loginUser);
+        UserLoginVo userLoginVo = this.getUserLoginVo(loginUser);
+        session.setAttribute(UserConstant.USER_LOGIN_STATE, userLoginVo);
 
         // 4. 返回脱敏后的用户信息
-        return getUserLoginVo(loginUser);
+        return userLoginVo;
     }
 
     /**
@@ -422,6 +421,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
+     * 获得登录后的用户信息.
+     *
+     * @param user 登录后的用户信息
+     * @return 脱敏后的用户信息
+     */
+    private UserLoginVo getUserLoginVo(User user) {
+        if (user == null) {
+            return null;
+        }
+        return userConverter.toUserLoginVo(user);
+    }
+
+    /**
      * 清理用户会话，强制用户重新登录.
      *
      * @param userId 用户 ID
@@ -439,19 +451,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         } catch (Exception e) {
             log.warn("清理用户会话失败, userId={}", userId, e);
         }
-    }
-
-    /**
-     * 获得登录后的用户信息.
-     *
-     * @param user 登录后的用户信息
-     * @return 脱敏后的用户信息
-     */
-    private UserLoginVo getUserLoginVo(User user) {
-        if (user == null) {
-            return null;
-        }
-        return userConverter.toUserLoginVo(user);
     }
 
     /**
@@ -554,8 +553,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         ThrowUtils.throwIf(!result, ErrorCode.SYSTEM_ERROR, "绑定/换绑联系方式失败");
 
         // 重新从数据库获取最新的用户信息，再更新 Session，保证数据一致性
-        User latesUser = this.getById(userId);
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, latesUser);
+        UserLoginVo latesUserLoginVo = this.userConverter.toUserLoginVo(this.getById(userId));
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, latesUserLoginVo);
 
         return true;
     }
@@ -566,17 +565,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param request {@linkplain HttpServletRequest HTTP 请求对象}
      * @return 登录用户信息
      */
-    @Override
-    public User getLoginUser(HttpServletRequest request) {
+    private User getLoginUser(HttpServletRequest request) {
         // 判断登录状态
         Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
-        User currentUser = (User) userObj;
-        if (ObjectUtil.isEmpty(currentUser) || ObjectUtil.isEmpty(currentUser.getId())) {
+        UserLoginVo userLoginVo = (UserLoginVo) userObj;
+        if (ObjectUtil.isEmpty(userLoginVo) || ObjectUtil.isEmpty(userLoginVo.getId())) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
-        // 从数据库中查询用户信息（追求性能的话可以注释，直接返回上述结果）
-        Long userId = currentUser.getId();
-        currentUser = this.getById(userId);
+        // 从数据库中查询用户信息
+        User currentUser = this.getById(userLoginVo.getId());
         ThrowUtils.throwIf(currentUser == null, ErrorCode.NOT_LOGIN_ERROR);
         return currentUser;
     }
@@ -1142,20 +1139,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 返回查询包装器
         return queryWrapper;
-    }
-
-    /**
-     * 获取脱敏后的用户信息.
-     *
-     * @param user {@linkplain User 用户实体}
-     * @return 脱敏后的用户信息
-     */
-    @Override
-    public UserVo getUserVo(User user) {
-        if (user == null) {
-            return null;
-        }
-        return userConverter.toUserVo(user);
     }
 
     /**

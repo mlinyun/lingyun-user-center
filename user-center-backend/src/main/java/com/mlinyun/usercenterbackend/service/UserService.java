@@ -106,22 +106,6 @@ public interface UserService extends IService<User> {
     boolean userBindPhone(UserBindPhoneRequest userBindPhoneRequest, HttpServletRequest request);
 
     /**
-     * 获取登录用户信息（后端使用）.
-     *
-     * @param request {@linkplain HttpServletRequest HTTP 请求对象}
-     * @return 登录用户信息
-     */
-    User getLoginUser(HttpServletRequest request);
-
-    /**
-     * 获取脱敏后的用户信息.
-     *
-     * @param user {@linkplain User 用户实体}
-     * @return 脱敏后的用户信息
-     */
-    UserVo getUserVo(User user);
-
-    /**
      * 获取登录用户信息服务.
      *
      * @param request {@linkplain HttpServletRequest HTTP 请求对象}
