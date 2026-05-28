@@ -186,7 +186,7 @@ public final class UserConstant {
     /**
      * 用户头像文件过大提示信息.
      */
-    public static final String AVATAR_FILE_TOO_LARGE_MSG = "头像文件过大，不能超过 5MB";
+    public static final String AVATAR_FILE_TOO_LARGE_MSG = "头像文件过大，不能超过 2MB";
 
     /**
      * 用户头像文件类型不支持提示信息.

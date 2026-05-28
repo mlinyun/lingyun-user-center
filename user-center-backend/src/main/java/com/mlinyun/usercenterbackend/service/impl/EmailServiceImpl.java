@@ -4,10 +4,10 @@ import com.mlinyun.usercenterbackend.common.ErrorCode;
 import com.mlinyun.usercenterbackend.constant.captcha.CaptchaConstant;
 import com.mlinyun.usercenterbackend.exception.BusinessException;
 import com.mlinyun.usercenterbackend.service.EmailService;
-import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -27,8 +27,7 @@ public class EmailServiceImpl implements EmailService {
     /**
      * Spring Boot Mail 发送器.
      */
-    @Resource
-    private JavaMailSender javaMailSender;
+    private final JavaMailSender javaMailSender;
 
     /**
      * 发件人邮箱地址（从配置文件读取）.
@@ -41,6 +40,16 @@ public class EmailServiceImpl implements EmailService {
      */
     @Value("${spring.application.name:User Center}")
     private String appName;
+
+    /**
+     * 构造函数，注入 JavaMailSender.
+     * 
+     * @param javaMailSender {@linkplain JavaMailSender Spring Boot Mail 发送器实例}
+     */
+    @Autowired
+    public EmailServiceImpl(JavaMailSender javaMailSender) {
+        this.javaMailSender = javaMailSender;
+    }
 
     /**
      * 发送验证码邮件.

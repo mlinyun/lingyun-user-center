@@ -1,11 +1,8 @@
 package com.mlinyun.usercenterbackend.controller;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import com.mlinyun.usercenterbackend.common.BaseResponse;
-import com.mlinyun.usercenterbackend.common.ErrorCode;
 import com.mlinyun.usercenterbackend.common.ResultUtils;
-import com.mlinyun.usercenterbackend.exception.ThrowUtils;
 import com.mlinyun.usercenterbackend.model.dto.user.UserBindEmailRequest;
 import com.mlinyun.usercenterbackend.model.dto.user.UserBindPhoneRequest;
 import com.mlinyun.usercenterbackend.model.dto.user.UserEmailLoginRequest;
@@ -70,7 +67,6 @@ public class UserController {
     @PostMapping("/register/account")
     @Operation(summary = "用户注册", description = "通过账号和密码进行注册")
     public BaseResponse<String> userRegister(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userRegisterRequest), ErrorCode.PARAMS_ERROR);
         String userId = userService.userRegister(userRegisterRequest);
         return ResultUtils.success(userId);
     }
@@ -86,7 +82,6 @@ public class UserController {
     @Operation(summary = "邮箱注册", description = "通过邮箱验证码注册")
     public BaseResponse<String> userEmailRegister(
             @RequestBody @Valid UserEmailRegisterRequest userEmailRegisterRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailRegisterRequest), ErrorCode.PARAMS_ERROR);
         String userId = userService.userEmailRegister(userEmailRegisterRequest);
         return ResultUtils.success(userId);
     }
@@ -102,7 +97,6 @@ public class UserController {
     @Operation(summary = "手机号注册", description = "通过短信验证码注册")
     public BaseResponse<String> userPhoneRegister(
             @RequestBody @Valid UserPhoneRegisterRequest userPhoneRegisterRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneRegisterRequest), ErrorCode.PARAMS_ERROR);
         String userId = userService.userPhoneRegister(userPhoneRegisterRequest);
         return ResultUtils.success(userId);
     }
@@ -119,7 +113,6 @@ public class UserController {
     @Operation(summary = "用户登录", description = "通过账号和密码进行登录")
     public BaseResponse<UserLoginVo> userLogin(@RequestBody @Valid UserLoginRequest userLoginRequest,
             HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userLoginRequest), ErrorCode.PARAMS_ERROR);
         UserLoginVo userLoginVo = userService.userLogin(userLoginRequest, request);
         return ResultUtils.success(userLoginVo);
     }
@@ -136,7 +129,6 @@ public class UserController {
     @Operation(summary = "邮箱验证码登录", description = "通过邮箱验证码登录，无需密码")
     public BaseResponse<UserLoginVo> userEmailLogin(@RequestBody @Valid UserEmailLoginRequest userEmailLoginRequest,
             HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailLoginRequest), ErrorCode.PARAMS_ERROR);
         UserLoginVo userLoginVo = userService.userEmailLogin(userEmailLoginRequest, request);
         return ResultUtils.success(userLoginVo);
     }
@@ -153,7 +145,6 @@ public class UserController {
     @Operation(summary = "手机号验证码登录", description = "通过短信验证码登录，无需密码")
     public BaseResponse<UserLoginVo> userPhoneLogin(@RequestBody @Valid UserPhoneLoginRequest userPhoneLoginRequest,
             HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneLoginRequest), ErrorCode.PARAMS_ERROR);
         UserLoginVo userLoginVo = userService.userPhoneLogin(userPhoneLoginRequest, request);
         return ResultUtils.success(userLoginVo);
     }
@@ -170,7 +161,6 @@ public class UserController {
     @Operation(summary = "绑定/换绑邮箱", description = "用户绑定或换绑邮箱，需提供新邮箱及验证码")
     public BaseResponse<Boolean> userBindEmail(@RequestBody @Valid UserBindEmailRequest userBindEmailRequest,
             HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userBindEmailRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.userBindEmail(userBindEmailRequest, request);
         return ResultUtils.success(result);
     }
@@ -187,7 +177,6 @@ public class UserController {
     @Operation(summary = "绑定/换绑手机号", description = "用户绑定或换绑手机号，需提供新手机号及短信验证码")
     public BaseResponse<Boolean> userBindPhone(@RequestBody @Valid UserBindPhoneRequest userBindPhoneRequest,
             HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userBindPhoneRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.userBindPhone(userBindPhoneRequest, request);
         return ResultUtils.success(result);
     }
@@ -202,7 +191,6 @@ public class UserController {
     @GetMapping("/current")
     @Operation(summary = "获取登录用户信息", description = "获取登录用户信息接口")
     public BaseResponse<UserLoginVo> getLoginUserInfo(HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(request), ErrorCode.PARAMS_ERROR);
         UserLoginVo userLoginVo = userService.getLoginUserInfo(request);
         return ResultUtils.success(userLoginVo);
     }
@@ -217,7 +205,6 @@ public class UserController {
     @PostMapping("/logout")
     @Operation(summary = "用户注销", description = "用户注销接口")
     public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(request), ErrorCode.PARAMS_ERROR);
         boolean result = userService.userLogout(request);
         return ResultUtils.success(result);
     }
@@ -234,7 +221,6 @@ public class UserController {
     @Operation(summary = "更新用户信息", description = "更新用户信息接口")
     public BaseResponse<Boolean> userUpdateInfo(@RequestBody @Valid UserUpdateInfoRequest userUpdateInfoRequest,
             HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userUpdateInfoRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.userUpdateInfo(userUpdateInfoRequest, request);
         return ResultUtils.success(result);
     }
@@ -251,7 +237,6 @@ public class UserController {
     @Operation(summary = "更新密码", description = "用户更新密码接口")
     public BaseResponse<Boolean> userUpdatePwd(@RequestBody @Valid UserUpdatePwdRequest userUpdatePwdRequest,
             HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userUpdatePwdRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.userUpdatePwd(userUpdatePwdRequest, request);
         return ResultUtils.success(result);
     }
@@ -267,7 +252,6 @@ public class UserController {
     @Operation(summary = "通过邮箱重置密码", description = "通过邮箱验证码验证身份后重置密码")
     public BaseResponse<Boolean> userResetPwd(@RequestBody @Valid UserEmailResetPwdRequest userEmailResetPwdRequest,
             HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailResetPwdRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.userEmailResetPwd(userEmailResetPwdRequest, request);
         return ResultUtils.success(result);
     }
@@ -283,7 +267,6 @@ public class UserController {
     @Operation(summary = "通过手机号重置密码", description = "通过短信验证码验证身份后重置密码")
     public BaseResponse<Boolean> userPhoneResetPwd(
             @RequestBody @Valid UserPhoneResetPwdRequest userPhoneResetPwdRequest, HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneResetPwdRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.userPhoneResetPwd(userPhoneResetPwdRequest, request);
         return ResultUtils.success(result);
     }
@@ -299,7 +282,6 @@ public class UserController {
     @PostMapping("/avatar")
     @Operation(summary = "上传/修改头像", description = "上传头像文件并更新当前登录用户的头像")
     public BaseResponse<String> userUploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(file), ErrorCode.PARAMS_ERROR);
         String avatarUrl = userService.userUploadAvatar(file, request);
         return ResultUtils.success(avatarUrl);
     }

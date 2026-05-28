@@ -33,6 +33,15 @@ public class SessionConfig {
     @Value("${server.servlet.session.cookie.max-age:7d}")
     private Duration cookieMaxAge;
 
+    @Value("${server.servlet.session.cookie.secure:true}")
+    private boolean cookieSecure;
+
+    @Value("${server.servlet.session.cookie.http-only:true}")
+    private boolean cookieHttpOnly;
+
+    @Value("${server.servlet.session.cookie.same-site:Lax}")
+    private String cookieSameSite;
+
     /**
      * Spring Session 专用 Redis 序列化器.
      *
@@ -65,6 +74,11 @@ public class SessionConfig {
         cookieSerializer.setCookiePath("/");
         // 设置 cookie 的域名匹配模式，提取主域名（如 example.com），适用于多子域部署
         cookieSerializer.setDomainNamePattern("^.+?\\.(\\w+\\.[a-z]+)$");
+        // 设置 SameSite 属性，增强安全性，防止 CSRF 攻击
+        cookieSerializer.setSameSite(cookieSameSite);
+        // 设置 Secure 和 HttpOnly 属性，增强安全性，防止 XSS 攻击和会话劫持
+        cookieSerializer.setUseSecureCookie(cookieSecure);
+        cookieSerializer.setUseHttpOnlyCookie(cookieHttpOnly);
         // Cookie 有效期（秒）
         cookieSerializer.setCookieMaxAge((int) cookieMaxAge.getSeconds());
         return cookieSerializer;

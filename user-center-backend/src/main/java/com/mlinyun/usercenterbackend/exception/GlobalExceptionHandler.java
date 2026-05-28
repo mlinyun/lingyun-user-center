@@ -5,6 +5,7 @@ import com.mlinyun.usercenterbackend.common.ErrorCode;
 import com.mlinyun.usercenterbackend.common.ResultUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -56,6 +57,20 @@ public class GlobalExceptionHandler {
         log.warn("RuntimeException: message={}", e.getMessage());
         // 返回错误响应
         return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统异常，请稍后再试");
+    }
+
+    /**
+     * 处理请求体不可读异常.
+     *
+     * @param e 请求体不可读异常对象
+     * @return 统一格式的错误响应
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public BaseResponse<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+        // 记录异常信息
+        log.warn("HttpMessageNotReadableException: message={}", e.getMessage());
+        // 返回错误响应
+        return ResultUtils.error(ErrorCode.PARAMS_ERROR, "请求体不能为空");
     }
 
     /**

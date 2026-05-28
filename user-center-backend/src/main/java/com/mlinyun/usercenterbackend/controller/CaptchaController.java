@@ -1,6 +1,5 @@
 package com.mlinyun.usercenterbackend.controller;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import com.mlinyun.usercenterbackend.common.BaseResponse;
 import com.mlinyun.usercenterbackend.common.ErrorCode;
@@ -61,8 +60,6 @@ public class CaptchaController {
     @Operation(summary = "发送验证码", description = "发送邮箱或短信验证码，60秒内不可重复发送")
     public BaseResponse<Boolean> sendCaptcha(@RequestBody @Valid SendCaptchaRequest sendCaptchaRequest,
             HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(sendCaptchaRequest), ErrorCode.PARAMS_ERROR);
-
         // 解析并校验验证码类型
         CaptchaTypeEnum type = CaptchaTypeEnum.getByValue(sendCaptchaRequest.getType());
         ThrowUtils.throwIf(type == null, ErrorCode.PARAMS_ERROR, "不支持的验证码类型");

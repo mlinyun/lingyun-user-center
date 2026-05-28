@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `user`
     editTime      DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '编辑时间',
     createTime    DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updateTime    DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    isDelete      BIGINT UNSIGNED        DEFAULT 0      NOT NULL COMMENT '逻辑删除（0: 未删除, 时间戳: 删除时间）',
+    isDelete      BIGINT                 DEFAULT 0      NOT NULL COMMENT '逻辑删除（0: 未删除, 时间戳: 删除时间）',
     -- 唯一索引: 确保登录账号、手机号、邮箱地址的唯一性
     UNIQUE KEY uk_userAccount (userAccount, isDelete) COMMENT '登录账号和删除状态复合唯一索引',
     UNIQUE KEY uk_userPhone (userPhone, isDelete) COMMENT '手机号和删除状态复合唯一索引',
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `captcha_log`
     verifyTime    DATETIME         DEFAULT NULL COMMENT '验证时间',
     createTime    DATETIME         DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updateTime    DATETIME         DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    isDelete      BIGINT UNSIGNED  DEFAULT 0                             NOT NULL COMMENT '逻辑删除（0: 未删除, 时间戳: 删除时间）',
+    isDelete      BIGINT           DEFAULT 0                             NOT NULL COMMENT '逻辑删除（0: 未删除, 时间戳: 删除时间）',
     -- 普通索引: 优化查询性能
     INDEX idx_target (target) COMMENT '发送目标索引',
     INDEX idx_captchaType (captchaType) COMMENT '验证码类型索引',

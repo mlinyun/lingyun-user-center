@@ -51,16 +51,20 @@ import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.Session;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -95,6 +99,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     private final UserConverter userConverter;
 
+    private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
+
     /**
      * 构造函数，注入 CaptchaService.
      *
@@ -102,14 +108,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param cosClientConfig {@linkplain CosClientConfig 腾讯云 COS 配置}
      * @param cosManager {@linkplain CosManager 对象存储服务管理器}
      * @param userConverter {@linkplain UserConverter 用户模型转换器}
+     * @param sessionRepository {@linkplain FindByIndexNameSessionRepository} 会话仓库
      */
     @Autowired
     public UserServiceImpl(CaptchaService captchaService, CosClientConfig cosClientConfig, CosManager cosManager,
-            UserConverter userConverter) {
+            UserConverter userConverter, FindByIndexNameSessionRepository<? extends Session> sessionRepository) {
         this.captchaService = captchaService;
         this.cosClientConfig = cosClientConfig;
         this.cosManager = cosManager;
         this.userConverter = userConverter;
+        this.sessionRepository = sessionRepository;
     }
 
     // region 用户服务
@@ -122,9 +130,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String userRegister(UserRegisterRequest userRegisterRequest) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userRegisterRequest), ErrorCode.PARAMS_ERROR, "用户注册请求体不能为空");
-        // 获取请求体中的参数
+        // 1. 获取请求体中的参数
         String userAccount = userRegisterRequest.getUserAccount(); // 登陆账号
         String userPassword = userRegisterRequest.getUserPassword(); // 登陆密码
         String checkPassword = userRegisterRequest.getCheckPassword(); // 校验密码
@@ -150,7 +156,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public String userEmailRegister(UserEmailRegisterRequest userEmailRegisterRequest) {
         // 1. 参数校验
         ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailRegisterRequest), ErrorCode.PARAMS_ERROR, "邮箱注册请求体不能为空");
-        // 获取请求体中的参数
+        // 1. 获取请求体中的参数
         String userEmail = userEmailRegisterRequest.getUserEmail();
         String captchaCode = userEmailRegisterRequest.getCaptchaCode();
         String userPassword = userEmailRegisterRequest.getUserPassword();
@@ -178,8 +184,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String userPhoneRegister(UserPhoneRegisterRequest userPhoneRegisterRequest) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneRegisterRequest), ErrorCode.PARAMS_ERROR, "手机号注册请求体不能为空");
         // 获取请求体中的参数
         String userPhone = userPhoneRegisterRequest.getUserPhone();
         String captchaCode = userPhoneRegisterRequest.getCaptchaCode();
@@ -281,9 +285,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public UserLoginVo userLogin(UserLoginRequest userLoginRequest, HttpServletRequest request) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userLoginRequest), ErrorCode.PARAMS_ERROR, "用户登录请求体不能为空");
-        // 获取请求体中的参数
+        // 1. 获取请求体中的参数
         String userAccount = userLoginRequest.getUserAccount(); // 用户账号
         String userPassword = userLoginRequest.getUserPassword(); // 用户密码
         if (ObjectUtil.hasEmpty(userAccount, userPassword)) {
@@ -312,8 +314,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public UserLoginVo userEmailLogin(UserEmailLoginRequest userEmailLoginRequest, HttpServletRequest request) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailLoginRequest), ErrorCode.PARAMS_ERROR, "登录请求体不能为空");
+        // 1. 获取请求体中的参数
         String userEmail = userEmailLoginRequest.getUserEmail();
         String captchaCode = userEmailLoginRequest.getCaptchaCode();
         if (ObjectUtil.hasEmpty(userEmail, captchaCode)) {
@@ -340,8 +341,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public UserLoginVo userPhoneLogin(UserPhoneLoginRequest userPhoneLoginRequest, HttpServletRequest request) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneLoginRequest), ErrorCode.PARAMS_ERROR, "登录请求体不能为空");
+        // 1. 获取请求体中的参数
         String userPhone = userPhoneLoginRequest.getUserPhone();
         String captchaCode = userPhoneLoginRequest.getCaptchaCode();
         if (ObjectUtil.hasEmpty(userPhone, captchaCode)) {
@@ -390,11 +390,55 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean banned = UserStatusEnum.isBanned(userStatus);
         ThrowUtils.throwIf(banned, ErrorCode.FORBIDDEN_ERROR, UserConstant.ACCOUNT_BANNED_MSG);
 
-        // 2. 记录用户登录状态
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, loginUser);
+        // 2. 轮换会话 ID，防止会话固定攻击
+        renewSession(request);
 
-        // 3. 返回脱敏后的用户信息
+        // 3. 记录用户登录状态
+        HttpSession session = request.getSession();
+        session.setAttribute(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, loginUser.getId().toString());
+        session.setAttribute(UserConstant.USER_LOGIN_STATE, loginUser);
+
+        // 4. 返回脱敏后的用户信息
         return getUserLoginVo(loginUser);
+    }
+
+    /**
+     * 轮换会话 ID，防止会话固定攻击.
+     *
+     * @param request {@linkplain HttpServletRequest HTTP 请求对象}
+     */
+    private void renewSession(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        try {
+            request.changeSessionId();
+        } catch (Exception _) {
+            try {
+                session.invalidate();
+                request.getSession(true);
+            } catch (IllegalStateException _) {
+                // ignore invalidated session
+            }
+        }
+    }
+
+    /**
+     * 清理用户会话，强制用户重新登录.
+     *
+     * @param userId 用户 ID
+     */
+    private void expireUserSessions(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        try {
+            Map<String, ? extends Session> sessions = sessionRepository.findByIndexNameAndIndexValue(
+                    FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, userId.toString());
+            for (String sessionId : sessions.keySet()) {
+                sessionRepository.deleteById(sessionId);
+            }
+        } catch (Exception e) {
+            log.warn("清理用户会话失败, userId={}", userId, e);
+        }
     }
 
     /**
@@ -420,8 +464,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean userBindEmail(UserBindEmailRequest userBindEmailRequest, HttpServletRequest request) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userBindEmailRequest), ErrorCode.PARAMS_ERROR, "绑定邮箱请求体不能为空");
+        // 1. 获取请求体中的参数
         String userEmail = userBindEmailRequest.getUserEmail();
         String captchaCode = userBindEmailRequest.getCaptchaCode();
         if (ObjectUtil.hasEmpty(userEmail, captchaCode)) {
@@ -458,8 +501,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean userBindPhone(UserBindPhoneRequest userBindPhoneRequest, HttpServletRequest request) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userBindPhoneRequest), ErrorCode.PARAMS_ERROR, "绑定手机号请求体不能为空");
+        // 1. 获取请求体中的参数
         String userPhone = userBindPhoneRequest.getUserPhone();
         String captchaCode = userBindPhoneRequest.getCaptchaCode();
         if (ObjectUtil.hasEmpty(userPhone, captchaCode)) {
@@ -561,14 +603,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean userLogout(HttpServletRequest request) {
-        // 判断登录状态
-        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
-        if (ObjectUtil.isEmpty(userObj)) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, UserConstant.ACCOUNT_NOT_LOGIN_MSG);
-        }
         try {
-            // 清除登录状态
-            request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return true;
+            }
+            session.invalidate();
+            return true;
+        } catch (IllegalStateException _) {
             return true;
         } catch (Exception e) {
             // 处理异常
@@ -689,9 +731,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean userEmailResetPwd(UserEmailResetPwdRequest userEmailResetPwdRequest, HttpServletRequest request) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userEmailResetPwdRequest), ErrorCode.PARAMS_ERROR, "用户邮箱重置密码请求不能为空");
-        // 获取传递的参数
+        // 1. 获取请求体中的参数
         String userEmail = userEmailResetPwdRequest.getUserEmail();
         String captchaCode = userEmailResetPwdRequest.getCaptchaCode();
         String newPassword = userEmailResetPwdRequest.getNewPassword();
@@ -717,9 +757,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean userPhoneResetPwd(UserPhoneResetPwdRequest userPhoneResetPwdRequest, HttpServletRequest request) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(userPhoneResetPwdRequest), ErrorCode.PARAMS_ERROR, "用户手机号重置密码请求不能为空");
-        // 获取传递的参数
+        // 1. 获取请求体中的参数
         String userPhone = userPhoneResetPwdRequest.getUserPhone();
         String captchaCode = userPhoneResetPwdRequest.getCaptchaCode();
         String newPassword = userPhoneResetPwdRequest.getNewPassword();
@@ -842,7 +880,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String thumbnailAvatarUrl = null;
         try {
             // 创建临时文件
-            tempFile = File.createTempFile(objectKey, null);
+            String tempFilePrefix = "user-center-avatar-" + userId + "-" + uuid;
+            String tempFileSuffix = fileSuffix == null || fileSuffix.isBlank() ? null : "." + fileSuffix;
+            tempFile = File.createTempFile(tempFilePrefix, tempFileSuffix);
             file.transferTo(tempFile);
             // 上传到对象存储并获取图片信息
             PutObjectResult putObjectResult = cosManager.putPictureObject(objectKey, tempFile);
@@ -920,9 +960,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String adminAddUser(AdminAddUserRequest adminAddUserRequest) {
-        // 1. 基本参数校验（通过 @Valid 注解在 Controller 层已完成大部分校验）
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminAddUserRequest), ErrorCode.PARAMS_ERROR, "管理员添加用户请求不能为空");
-        // 获取请求体中必填的参数
+        // 1. 获取请求体中必填的参数
         String userAccount = adminAddUserRequest.getUserAccount();
         String userPassword = adminAddUserRequest.getUserPassword();
         String checkPassword = adminAddUserRequest.getCheckPassword();
@@ -984,7 +1022,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public UserVo adminGetUserById(GetOrDeleteRequest adminGetUserRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminGetUserRequest), ErrorCode.PARAMS_ERROR, "用户获取或删除请求不能为空");
         User user = this.getUserByIdAndThrow(adminGetUserRequest.getId());
         return userConverter.toUserVo(user);
     }
@@ -998,8 +1035,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean adminDeleteUserById(GetOrDeleteRequest adminDeleteUserRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminDeleteUserRequest), ErrorCode.PARAMS_ERROR, "用户获取或删除请求不能为空");
+        // 通过用户 ID 检查用户是否存在
         Long userId = adminDeleteUserRequest.getId();
+        this.getUserByIdAndThrow(userId);
         // 删除用户
         boolean deleteResult = this.removeById(userId);
         ThrowUtils.throwIf(!deleteResult, ErrorCode.OPERATION_ERROR, "用户删除失败，数据库删除异常");
@@ -1015,7 +1053,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean adminUpdateUserInfo(AdminUpdateUserInfoRequest adminUpdateUserInfoRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminUpdateUserInfoRequest), ErrorCode.PARAMS_ERROR, "用户信息更新请求不能为空");
         // 通过用户 ID 检查用户是否存在
         User user = this.getUserByIdAndThrow(adminUpdateUserInfoRequest.getId());
         // 只更新允许修改的字段，且不覆盖未传递的字段
@@ -1034,7 +1071,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public Page<UserVo> adminGetUserInfoByPage(AdminQueryUserRequest adminQueryUserRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminQueryUserRequest), ErrorCode.PARAMS_ERROR, "用户查询请求不能为空");
         int pageNum = adminQueryUserRequest.getPageNum();
         int pageSize = adminQueryUserRequest.getPageSize();
         Page<User> userPage =
@@ -1053,8 +1089,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 用户查询包装器
      */
     private QueryWrapper<User> buildUserQueryWrapper(AdminQueryUserRequest adminQueryUserRequest) {
-        // 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminQueryUserRequest), ErrorCode.PARAMS_ERROR, "用户查询请求不能为空");
         // 获取查询参数（可能为 null）
         Long userId = adminQueryUserRequest.getId();
         String userAccount = adminQueryUserRequest.getUserAccount();
@@ -1133,7 +1167,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean adminResetUserPassword(AdminResetUserPwdRequest adminResetUserPwdRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminResetUserPwdRequest), ErrorCode.PARAMS_ERROR, "用户密码重置请求不能为空");
         // 检查用户是否存在
         User user = this.getUserByIdAndThrow(adminResetUserPwdRequest.getId());
 
@@ -1154,6 +1187,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean updateResult = this.updateById(updateUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, UserConstant.RESET_CREDENTIAL_FAILED_MSG);
 
+        expireUserSessions(user.getId());
+
         // 返回重置结果
         return true;
     }
@@ -1167,8 +1202,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean adminBanOrUnbanUser(AdminBanUserRequest adminBanUserRequest) {
-        // 1. 参数校验
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminBanUserRequest), ErrorCode.PARAMS_ERROR, "用户封禁或解封请求不能为空");
+        // 1. 获取请求体中的参数
         Long userId = adminBanUserRequest.getId();
         Integer userStatus = adminBanUserRequest.getUserStatus();
 

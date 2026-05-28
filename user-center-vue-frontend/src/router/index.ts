@@ -154,7 +154,7 @@ router.beforeEach(async (to) => {
  */
 router.afterEach((to) => {
     // 设置页面标题
-    const baseTitle = import.meta.env.VITE_APP_TITLE || "凌云 AI 零代码应用生成平台";
+    const baseTitle = import.meta.env.VITE_APP_TITLE || "凌云用户中心系统";
     document.title = to.meta.title ? `${to.meta.title} - ${baseTitle}` : baseTitle;
     // 完成页面加载进度条，确保在页面完全加载后才结束进度条
     setTimeout(() => {

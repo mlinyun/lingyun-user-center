@@ -5,11 +5,11 @@ on:
   push:
     paths:
       - "user-center-vue-frontend/**"
-      - "cicd-vue-frontend.yaml"
+      - ".github/workflows/cicd-vue-frontend.yaml"
   pull_request:
     paths:
       - "user-center-vue-frontend/**"
-      - "cicd-vue-frontend.yaml"
+      - ".github/workflows/cicd-vue-frontend.yaml"
   workflow_dispatch:
 
 concurrency:
@@ -47,7 +47,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.store_path }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('user-center-docs/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('user-center-vue-frontend/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
@@ -61,10 +61,7 @@ jobs:
         run: pnpm type-check
 
       - name: Stylelint check
-        run: pnpm stylelint:fix
-
-      - name: Format code
-        run: pnpm format:all
+        run: pnpm stylelint
 
       - name: Build
         run: pnpm build

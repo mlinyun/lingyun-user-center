@@ -1,15 +1,12 @@
 package com.mlinyun.usercenterbackend.controller;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import com.mlinyun.usercenterbackend.annotation.AuthCheck;
 import com.mlinyun.usercenterbackend.common.BaseResponse;
-import com.mlinyun.usercenterbackend.common.ErrorCode;
 import com.mlinyun.usercenterbackend.common.ResultUtils;
 import com.mlinyun.usercenterbackend.common.dto.GetOrDeleteRequest;
 import com.mlinyun.usercenterbackend.constant.user.UserConstant;
-import com.mlinyun.usercenterbackend.exception.ThrowUtils;
 import com.mlinyun.usercenterbackend.model.dto.admin.AdminAddUserRequest;
 import com.mlinyun.usercenterbackend.model.dto.admin.AdminBanUserRequest;
 import com.mlinyun.usercenterbackend.model.dto.admin.AdminQueryUserRequest;
@@ -68,7 +65,6 @@ public class UserAdminController {
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     @Operation(summary = "管理员添加用户", description = "管理员添加用户接口")
     public BaseResponse<String> adminAddUser(@RequestBody @Valid AdminAddUserRequest adminAddUserRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminAddUserRequest), ErrorCode.PARAMS_ERROR);
         String userId = userService.adminAddUser(adminAddUserRequest);
         return ResultUtils.success(userId);
     }
@@ -84,7 +80,6 @@ public class UserAdminController {
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     @Operation(summary = "管理员根据 id 获取用户信息", description = "管理员根据 id 获取用户信息接口")
     public BaseResponse<UserVo> adminGetUserById(@RequestBody @Valid GetOrDeleteRequest adminGetUserRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminGetUserRequest), ErrorCode.PARAMS_ERROR);
         UserVo userVo = userService.adminGetUserById(adminGetUserRequest);
         return ResultUtils.success(userVo);
     }
@@ -100,7 +95,6 @@ public class UserAdminController {
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     @Operation(summary = "管理员根据 id 删除用户", description = "管理员根据 id 删除用户接口")
     public BaseResponse<Boolean> adminDeleteUserById(@RequestBody @Valid GetOrDeleteRequest adminDeleteUserRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminDeleteUserRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.adminDeleteUserById(adminDeleteUserRequest);
         return ResultUtils.success(result);
     }
@@ -117,7 +111,6 @@ public class UserAdminController {
     @Operation(summary = "管理员更新用户信息", description = "管理员更新用户信息接口")
     public BaseResponse<Boolean> adminUpdateUserInfo(
             @RequestBody @Valid AdminUpdateUserInfoRequest adminUpdateUserInfoRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminUpdateUserInfoRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.adminUpdateUserInfo(adminUpdateUserInfoRequest);
         return ResultUtils.success(result);
     }
@@ -134,7 +127,6 @@ public class UserAdminController {
     @Operation(summary = "管理员分页获取用户列表", description = "管理员分页获取用户列表接口")
     public BaseResponse<Page<UserVo>> adminGetUserInfoByPage(
             @RequestBody @Valid AdminQueryUserRequest adminQueryUserRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminQueryUserRequest), ErrorCode.PARAMS_ERROR);
         Page<UserVo> userVoPage = userService.adminGetUserInfoByPage(adminQueryUserRequest);
         return ResultUtils.success(userVoPage);
     }
@@ -151,7 +143,6 @@ public class UserAdminController {
     @Operation(summary = "管理员重置用户密码", description = "管理员重置用户密码接口")
     public BaseResponse<Boolean> adminResetUserPwd(
             @RequestBody @Valid AdminResetUserPwdRequest adminResetUserPwdRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminResetUserPwdRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.adminResetUserPassword(adminResetUserPwdRequest);
         return ResultUtils.success(result);
     }
@@ -167,7 +158,6 @@ public class UserAdminController {
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     @Operation(summary = "管理员封禁或解封用户", description = "管理员封禁或解封用户接口")
     public BaseResponse<Boolean> adminBanOrUnbanUser(@RequestBody @Valid AdminBanUserRequest adminBanUserRequest) {
-        ThrowUtils.throwIf(ObjectUtil.isEmpty(adminBanUserRequest), ErrorCode.PARAMS_ERROR);
         boolean result = userService.adminBanOrUnbanUser(adminBanUserRequest);
         return ResultUtils.success(result);
     }
