@@ -5,6 +5,7 @@
 import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { ROUTES } from "@/constants/routes.ts";
+import { getSafeAuthRedirect } from "@/utils/redirect/auth-redirect";
 import {
     LockOutlined,
     MailOutlined,
@@ -126,9 +127,8 @@ const createSubmitHandler =
                 const userLoginVo = data.data;
                 authStore.markAuthenticated(userLoginVo);
                 // 路由跳转到上次的页面或者首页
-                const queryRoute = router.currentRoute.value.query.redirect as string;
-                const redirectPath = queryRoute || ROUTES.HOME.path;
-                await router.push({ path: redirectPath });
+                const redirectPath = getSafeAuthRedirect(router.currentRoute.value.query.redirect);
+                await router.push(redirectPath);
             }
         } catch (error) {
             console.log(`登录异常：${error}`);

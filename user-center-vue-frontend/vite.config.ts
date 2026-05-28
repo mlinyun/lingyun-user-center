@@ -35,7 +35,7 @@ export default ({ mode }: { mode: string }) => {
         base: VITE_APP_BASE_PATH || "/",
         plugins: [
             vue(),
-            vueDevTools(),
+            ...(mode === "development" ? [vueDevTools()] : []),
             AutoImport({
                 // 自动导入 Vue 相关函数，如 ref, reactive, toRef 等
                 imports: ["vue", "vue-router", "pinia"],
