@@ -17,11 +17,13 @@ import com.mlinyun.usercenterbackend.model.dto.user.UserUpdateInfoRequest;
 import com.mlinyun.usercenterbackend.model.dto.user.UserUpdatePwdRequest;
 import com.mlinyun.usercenterbackend.model.vo.user.UserLoginVo;
 import com.mlinyun.usercenterbackend.service.UserService;
+import com.mlinyun.usercenterbackend.validation.annotation.ValidAvatarFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,6 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 该类用于处理与用户相关的请求，提供用户管理的接口
  * </p>
  */
+@Validated
 @RestController
 @RequestMapping("/user")
 @Tag(name = "UserController", description = "用户相关接口")
@@ -191,7 +194,7 @@ public class UserController {
     @GetMapping("/current")
     @Operation(summary = "获取登录用户信息", description = "获取登录用户信息接口")
     public BaseResponse<UserLoginVo> getLoginUserInfo(HttpServletRequest request) {
-        UserLoginVo userLoginVo = userService.getLoginUserInfo(request);
+        UserLoginVo userLoginVo = userService.getLoginUser(request);
         return ResultUtils.success(userLoginVo);
     }
 
@@ -281,7 +284,8 @@ public class UserController {
     @ApiOperationSupport(author = "LingYun")
     @PostMapping("/avatar")
     @Operation(summary = "上传/修改头像", description = "上传头像文件并更新当前登录用户的头像")
-    public BaseResponse<String> userUploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+    public BaseResponse<String> userUploadAvatar(@ValidAvatarFile @RequestParam("file") MultipartFile file,
+            HttpServletRequest request) {
         String avatarUrl = userService.userUploadAvatar(file, request);
         return ResultUtils.success(avatarUrl);
     }

@@ -121,6 +121,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     // region 用户服务
+
     /**
      * 用户注册服务.
      *
@@ -476,7 +477,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 captchaCode);
 
         // 3. 获取当前登录用户（可能会抛出未登录异常）
-        User loginUser = this.getLoginUser(request);
+        UserLoginVo loginUser = this.getLoginUser(request);
 
         // 4. 判断新邮箱与当前用户绑定的邮箱是否相同，如果相同则抛出异常
         String loginUserEmail = loginUser.getUserEmail();
@@ -511,7 +512,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         captchaService.verifyCaptchaOrThrow(CaptchaTypeEnum.SMS, CaptchaSceneEnum.BIND_CHANGE, userPhone, captchaCode);
 
         // 3. 获取当前登录用户（可能会抛出未登录异常）
-        User loginUser = this.getLoginUser(request);
+        UserLoginVo loginUser = this.getLoginUser(request);
 
         // 4. 判断新手机号与当前用户绑定的手机号是否相同，如果相同则抛出异常
         String loginUserPhone = loginUser.getUserPhone();
@@ -534,7 +535,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param request HTTP 请求对象
      * @return 更新是否成功
      */
-    private boolean coreBindContactInfo(User loginUser, String email, String phone, HttpServletRequest request) {
+    private boolean coreBindContactInfo(UserLoginVo loginUser, String email, String phone, HttpServletRequest request) {
         User updateUser = new User();
         long userId = loginUser.getId();
         updateUser.setId(userId);
@@ -560,36 +561,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 获取登录用户信息（后端使用）.
+     * 获取登录用户信息.
      *
      * @param request {@linkplain HttpServletRequest HTTP 请求对象}
      * @return 登录用户信息
      */
-    private User getLoginUser(HttpServletRequest request) {
+    @Override
+    public UserLoginVo getLoginUser(HttpServletRequest request) {
         // 判断登录状态
         Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
-        UserLoginVo userLoginVo = (UserLoginVo) userObj;
-        if (ObjectUtil.isEmpty(userLoginVo) || ObjectUtil.isEmpty(userLoginVo.getId())) {
+        if (!(userObj instanceof UserLoginVo currentUser) || currentUser.getId() == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
-        // 从数据库中查询用户信息
-        User currentUser = this.getById(userLoginVo.getId());
-        ThrowUtils.throwIf(currentUser == null, ErrorCode.NOT_LOGIN_ERROR);
         return currentUser;
-    }
-
-    /**
-     * 获取登录用户信息服务.
-     *
-     * @param request {@linkplain HttpServletRequest HTTP 请求对象}
-     * @return 脱敏后的用户信息
-     */
-    @Override
-    public UserLoginVo getLoginUserInfo(HttpServletRequest request) {
-        // 获取登录用户信息
-        User loginUser = this.getLoginUser(request);
-        // 返回脱敏后的用户信息
-        return this.getUserLoginVo(loginUser);
     }
 
     /**
@@ -626,30 +610,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean userUpdateInfo(UserUpdateInfoRequest userUpdateInfoRequest, HttpServletRequest request) {
-        // 1. 参数校验（通过 @Valid 注解在 Controller 层已完成大部分校验）
-        if (ObjectUtil.isEmpty(userUpdateInfoRequest)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户信息更新请求不能为空");
-        }
+        // 1. 获取请求体中的参数
+        Long updateUserId = userUpdateInfoRequest.getId();
 
         // 2. 获取当前登录用户（可能会抛出未登录异常）
-        User loginUser = this.getLoginUser(request);
+        UserLoginVo loginUser = this.getLoginUser(request);
 
         // 3. 仅允许更新自己的信息
         Long userId = loginUser.getId();
-        ThrowUtils.throwIf(!userId.equals(userUpdateInfoRequest.getId()), ErrorCode.NOT_AUTH_ERROR, "无权限更新他人信息");
+        ThrowUtils.throwIf(!userId.equals(updateUserId), ErrorCode.NOT_AUTH_ERROR, "无权限更新他人信息");
+
+        // 4. 获取最新的用户信息
+        User latestUser = this.getById(userId);
 
         // 4. 只更新允许修改的字段，且不覆盖未传递的字段
-        userConverter.updateUserFromRequest(userUpdateInfoRequest, loginUser);
+        userConverter.updateUserFromRequest(userUpdateInfoRequest, latestUser);
         // 修改用户用户信息后需要更新编辑时间
-        loginUser.setEditTime(LocalDateTime.now());
+        latestUser.setEditTime(LocalDateTime.now());
 
         // 5. 执行更新
-        boolean updateResult = this.updateById(loginUser);
+        boolean updateResult = this.updateById(latestUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, "用户信息更新失败，数据库更新异常");
 
         // 6. 重新从数据库获取最新的用户信息，再更新 Session，保证数据一致性
-        User latesUser = this.getById(userId);
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, latesUser);
+        UserLoginVo latesUserLoginVo = this.userConverter.toUserLoginVo(this.getById(userId));
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, latesUserLoginVo);
 
         // 7. 返回更新结果
         return true;
@@ -671,12 +656,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 2. 获取当前登录用户（可能会抛出未登录异常）
-        User loginUser = this.getLoginUser(request);
+        UserLoginVo loginUser = this.getLoginUser(request);
 
         // 3. 仅允许修改自己的密码
         Long userId = loginUser.getId();
         boolean result = userId.equals(userUpdatePwdRequest.getId());
         ThrowUtils.throwIf(!result, ErrorCode.NOT_AUTH_ERROR, "无权限更新他人密码");
+
+        // 从数据库中获取用户信息（包含密码）
+        User latestUser = this.getById(userId);
 
         // 4. 获取传递的参数
         String rawPassword = userUpdatePwdRequest.getRawPassword(); // 原始密码
@@ -692,7 +680,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.CREDENTIAL_FORMAT_MSG);
 
         // 6. 校验旧密码是否正确
-        boolean isPasswordMatch = PasswordUtils.verify(rawPassword, loginUser.getUserPassword());
+        boolean isPasswordMatch = PasswordUtils.verify(rawPassword, latestUser.getUserPassword());
         ThrowUtils.throwIf(!isPasswordMatch, ErrorCode.PARAMS_ERROR, "原始密码错误");
 
         // 7. 判断新密码和校验密码是否一致，同时不能与原始密码相同
@@ -704,12 +692,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String encryptedNewPassword = PasswordUtils.encrypt(newPassword);
 
         // 9. 执行密码更新
-        User updateUser = new User();
-        updateUser.setId(userId);
-        updateUser.setUserPassword(encryptedNewPassword);
+        latestUser.setUserPassword(encryptedNewPassword);
         // 修改用户密码后需要更新编辑时间
-        updateUser.setEditTime(LocalDateTime.now());
-        boolean updateResult = this.updateById(updateUser);
+        latestUser.setEditTime(LocalDateTime.now());
+        boolean updateResult = this.updateById(latestUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, UserConstant.RESET_CREDENTIAL_FAILED_MSG);
 
         // 10. 密码更新后应主动使已有会话失效（强制重新登录）
@@ -790,19 +776,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = this.getOne(queryWrapper.eq(column, field));
         ThrowUtils.throwIf(ObjectUtil.isEmpty(user), ErrorCode.PARAMS_ERROR, notBoundMsg);
 
-        // 3.校验新密码和确认密码是否一致
+        // 2.校验新密码和确认密码是否一致
         ThrowUtils.throwIf(!newPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR,
                 UserConstant.CREDENTIAL_NOT_MATCH_MSG);
 
-        // 4. 校验新密码强度（双重保险）
+        // 3. 校验新密码强度（双重保险）
         boolean validStrong = PasswordUtils.isValidStrong(newPassword);
         ThrowUtils.throwIf(!validStrong, ErrorCode.PARAMS_ERROR, UserConstant.CREDENTIAL_FORMAT_MSG);
 
-        // 5. 判断用户是否被禁用
+        // 4. 判断用户是否被禁用
         boolean banned = UserStatusEnum.isBanned(user.getUserStatus());
         ThrowUtils.throwIf(banned, ErrorCode.FORBIDDEN_ERROR, UserConstant.ACCOUNT_BANNED_MSG);
 
-        // 6. 加密并在数据库中执行密码更新
+        // 5. 加密并在数据库中执行密码更新
         String encryptedNewPassword = PasswordUtils.encrypt(newPassword);
         User updateUser = new User();
         updateUser.setId(user.getId());
@@ -812,10 +798,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean updateResult = this.updateById(updateUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, UserConstant.RESET_CREDENTIAL_FAILED_MSG);
 
-        // 7. 密码更新后应主动使已有会话失效（强制重新登录）
+        // 6. 密码更新后应主动使已有会话失效（强制重新登录）
         this.userLogout(request);
 
-        // 8. 返回更新结果
+        // 7. 返回更新结果
         return true;
     }
 
@@ -829,15 +815,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public String userUploadAvatar(MultipartFile file, HttpServletRequest request) {
         // 1. 获取当前登录用户
-        User loginUser = this.getLoginUser(request);
+        UserLoginVo loginUser = this.getLoginUser(request);
         Long userId = loginUser.getId();
 
         // 2. 执行核心上传逻辑（参数校验、上传文件、回写 URL）
         String avatarUrl = coreUploadAvatar(file, userId);
 
         // 3. 同步最新用户信息到 Session
-        User latestUser = this.getById(userId);
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, latestUser);
+        UserLoginVo latesUserLoginVo = this.userConverter.toUserLoginVo(this.getById(userId));
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, latesUserLoginVo);
 
         return avatarUrl;
     }
@@ -957,6 +943,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     // endregion
 
     // region 用户管理服务
+
     /**
      * 管理员添加用户.
      *

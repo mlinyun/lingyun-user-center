@@ -1,4 +1,4 @@
-package com.mlinyun.usercenterbackend.annotation;
+package com.mlinyun.usercenterbackend.aop.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

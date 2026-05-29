@@ -111,7 +111,7 @@ public interface UserService extends IService<User> {
      * @param request {@linkplain HttpServletRequest HTTP 请求对象}
      * @return 脱敏后的用户信息
      */
-    UserLoginVo getLoginUserInfo(HttpServletRequest request);
+    UserLoginVo getLoginUser(HttpServletRequest request);
 
     /**
      * 用户注销服务.

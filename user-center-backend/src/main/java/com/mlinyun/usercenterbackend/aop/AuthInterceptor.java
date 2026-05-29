@@ -1,6 +1,6 @@
 package com.mlinyun.usercenterbackend.aop;
 
-import com.mlinyun.usercenterbackend.annotation.AuthCheck;
+import com.mlinyun.usercenterbackend.aop.annotation.AuthCheck;
 import com.mlinyun.usercenterbackend.common.ErrorCode;
 import com.mlinyun.usercenterbackend.constant.user.UserRoleEnum;
 import com.mlinyun.usercenterbackend.exception.BusinessException;
@@ -59,7 +59,7 @@ public class AuthInterceptor {
         }
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
         // 获取登录用户信息
-        UserLoginVo loginUser = userService.getLoginUserInfo(request);
+        UserLoginVo loginUser = userService.getLoginUser(request);
         // 判断是否需要权限校验
         UserRoleEnum mustRoleEnum = UserRoleEnum.getRoleEnumByValue(mustRole);
         // 如果不需要权限校验，则直接放行

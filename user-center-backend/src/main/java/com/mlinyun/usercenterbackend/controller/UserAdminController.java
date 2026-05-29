@@ -2,7 +2,7 @@ package com.mlinyun.usercenterbackend.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
-import com.mlinyun.usercenterbackend.annotation.AuthCheck;
+import com.mlinyun.usercenterbackend.aop.annotation.AuthCheck;
 import com.mlinyun.usercenterbackend.common.BaseResponse;
 import com.mlinyun.usercenterbackend.common.ResultUtils;
 import com.mlinyun.usercenterbackend.common.dto.GetOrDeleteRequest;
@@ -14,12 +14,14 @@ import com.mlinyun.usercenterbackend.model.dto.admin.AdminResetUserPwdRequest;
 import com.mlinyun.usercenterbackend.model.dto.admin.AdminUpdateUserInfoRequest;
 import com.mlinyun.usercenterbackend.model.vo.user.UserVo;
 import com.mlinyun.usercenterbackend.service.UserService;
+import com.mlinyun.usercenterbackend.validation.annotation.ValidAvatarFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 提供用户的增删改查接口，供管理员使用
  * </p>
  */
+@Validated
 @RestController
 @RequestMapping("/admin/user")
 @Tag(name = "UserAdminController", description = "用户管理相关接口")
@@ -173,7 +176,7 @@ public class UserAdminController {
     @PostMapping("/avatar")
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     @Operation(summary = "管理员上传或修改头像", description = "管理员上传或修改头像接口")
-    public BaseResponse<String> adminUploadAvatar(@RequestPart("file") @NotNull MultipartFile file,
+    public BaseResponse<String> adminUploadAvatar(@ValidAvatarFile @RequestPart("file") @NotNull MultipartFile file,
             @RequestParam("userId") @NotNull @PositiveOrZero Long userId) {
         String avatarUrl = userService.adminUploadAvatar(file, userId);
         return ResultUtils.success(avatarUrl);
