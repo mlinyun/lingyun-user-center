@@ -188,9 +188,10 @@ public interface UserService extends IService<User> {
      * 管理员根据 id 删除用户.
      *
      * @param adminDeleteUserRequest {@linkplain GetOrDeleteRequest 通用获取或删除请求参数}
+     * @param request {@linkplain HttpServletRequest HTTP 请求对象}
      * @return 是否删除成功
      */
-    boolean adminDeleteUserById(GetOrDeleteRequest adminDeleteUserRequest);
+    boolean adminDeleteUserById(GetOrDeleteRequest adminDeleteUserRequest, HttpServletRequest request);
 
     /**
      * 管理员更新用户信息.

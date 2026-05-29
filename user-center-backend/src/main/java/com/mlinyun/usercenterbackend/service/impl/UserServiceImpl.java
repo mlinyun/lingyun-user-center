@@ -1027,9 +1027,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean adminDeleteUserById(GetOrDeleteRequest adminDeleteUserRequest) {
-        // 通过用户 ID 检查用户是否存在
+    public boolean adminDeleteUserById(GetOrDeleteRequest adminDeleteUserRequest, HttpServletRequest request) {
+        // 获取请求参数中的用户 ID
         Long userId = adminDeleteUserRequest.getId();
+        // 获取当前登录用户信息
+        UserLoginVo loginUser = this.getLoginUser(request);
+        ThrowUtils.throwIf(loginUser.getId().equals(userId), ErrorCode.NOT_AUTH_ERROR, "管理员不能删除自己");
+        // 通过用户 ID 检查用户是否存在
         this.getUserByIdAndThrow(userId);
         // 删除用户
         boolean deleteResult = this.removeById(userId);

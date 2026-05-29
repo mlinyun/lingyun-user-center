@@ -17,6 +17,7 @@ import com.mlinyun.usercenterbackend.service.UserService;
 import com.mlinyun.usercenterbackend.validation.annotation.ValidAvatarFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -97,8 +98,9 @@ public class UserAdminController {
     @PostMapping("/delete")
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     @Operation(summary = "管理员根据 id 删除用户", description = "管理员根据 id 删除用户接口")
-    public BaseResponse<Boolean> adminDeleteUserById(@RequestBody @Valid GetOrDeleteRequest adminDeleteUserRequest) {
-        boolean result = userService.adminDeleteUserById(adminDeleteUserRequest);
+    public BaseResponse<Boolean> adminDeleteUserById(@RequestBody @Valid GetOrDeleteRequest adminDeleteUserRequest,
+            HttpServletRequest request) {
+        boolean result = userService.adminDeleteUserById(adminDeleteUserRequest, request);
         return ResultUtils.success(result);
     }
 
