@@ -191,7 +191,7 @@ const handleBindPhone = async () => {
     try {
         const { data } = await userBindPhone(bindPhoneForm);
         if (data.code === BusinessCode.SUCCESS && data.success) {
-            bindEmailForm.captchaCode = "";
+            bindPhoneForm.captchaCode = "";
             // 强制刷新用户信息以获取最新的手机号绑定状态
             await authStore.refreshCurrentUser();
         }
@@ -326,7 +326,7 @@ watch(
                             placeholder="请输入手机号"
                             allow-clear
                         >
-                            <template #prefix><MobileOutlined /></template>/>
+                            <template #prefix><MobileOutlined /></template>
                         </a-input>
                     </a-form-item>
                     <a-form-item label="验证码" name="captchaCode" :rules="FormRules.captchaCode">

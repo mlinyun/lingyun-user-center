@@ -14,7 +14,14 @@ import {
     UserOutlined,
 } from "@ant-design/icons-vue";
 import type { Api } from "@/types/api/typings";
-import { BusinessCode, CODE_REGEX, PHONE_REGEX, PWD_REGEX } from "@/constants";
+import {
+    BusinessCode,
+    CODE_REGEX,
+    PASSWORD_MAX_LENGTH,
+    PASSWORD_MIN_LENGTH,
+    PHONE_REGEX,
+    PWD_REGEX,
+} from "@/constants";
 import type { Rule } from "ant-design-vue/es/form";
 import type { AxiosResponse } from "axios";
 import { userEmailLogin, userLogin, userPhoneLogin } from "@/api/user.ts";
@@ -79,8 +86,8 @@ const FormRules: Record<string, Rule[]> = {
     ],
     userPassword: [
         { required: true, message: "登录密码是必填项!", trigger: "blur" },
-        { min: 8, message: "密码长度不小于 8 位!", trigger: "blur" },
-        { max: 16, message: "密码长度不大于 16 位!", trigger: "blur" },
+        { min: PASSWORD_MIN_LENGTH, message: `密码长度不小于 ${PASSWORD_MIN_LENGTH} 位!`, trigger: "blur" },
+        { max: PASSWORD_MAX_LENGTH, message: `密码长度不大于 ${PASSWORD_MAX_LENGTH} 位!`, trigger: "blur" },
         { pattern: PWD_REGEX, message: "密码需包含大小写字母、数字和特殊字符", trigger: "blur" },
     ],
     checkPassword: [

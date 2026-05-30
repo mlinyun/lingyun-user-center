@@ -3,7 +3,6 @@ import { routes } from "@/router/routes";
 import { BProgress } from "@bprogress/core";
 import { useAuthStore } from "@/stores/auth";
 import { messageUtils } from "@/utils/message";
-import type { Api } from "@/types/api/typings";
 import { ROUTES } from "@/constants/routes.ts";
 import { getSafeAuthRedirect } from "@/utils/redirect/auth-redirect.ts";
 
@@ -59,7 +58,6 @@ router.beforeEach(async (to) => {
     const authStore = useAuthStore();
     const authRoute = isAuthRoute(to.path);
     const needAuth = requiresAuth(to);
-    const requiredRole = to.meta.requiredRole as Api.User.UserRole | undefined;
 
     try {
         // 已登录用户访问登录/注册页时，自动回跳到目标页或首页
@@ -80,9 +78,9 @@ router.beforeEach(async (to) => {
             }
 
             /**
-             * RBAC 权限校验
+             * 权限校验
              */
-            if (requiredRole && authStore.user?.userRole !== requiredRole) {
+            if (to.meta.requiresAdmin && !authStore.isAdmin) {
                 messageUtils.error("当前账号无权访问该页面");
                 return {
                     name: ROUTES.HOME.name,

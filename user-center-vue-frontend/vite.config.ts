@@ -70,7 +70,7 @@ export default ({ mode }: { mode: string }) => {
             port: Number(VITE_APP_PORT) || 8080,
             proxy: {
                 "/api": {
-                    target: VITE_API_PROXY_URL || "http://127.0.0.1:8081/api",
+                    target: VITE_API_PROXY_URL || "http://127.0.0.1:8100/api",
                     changeOrigin: true,
                     rewrite: (path) => path.replace(/^\/api/, ""),
                 } as ProxyOptions,

@@ -1,3 +1,6 @@
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_LENGTH = 20;
+
 /** 密码格式正则：8-20位，需包含大小写字母、数字、特殊字符 */
 export const PWD_REGEX =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~`!@#$%^&*()\-_=+[{\]}\\|;:'",<.>/?])[A-Za-z\d~`!@#$%^&*()\-_=+[{\]}\\|;:'",<.>/?]{8,20}$/;

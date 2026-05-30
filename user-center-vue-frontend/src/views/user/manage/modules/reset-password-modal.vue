@@ -8,7 +8,7 @@ import { KeyOutlined, LockOutlined } from "@ant-design/icons-vue";
 import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "ant-design-vue";
 import type { Rule } from "ant-design-vue/es/form";
-import { PWD_REGEX } from "@/constants";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PWD_REGEX } from "@/constants";
 import { messageUtils } from "@/utils/message";
 import { formDataValidate } from "@/utils/form/form-data-validate.ts";
 
@@ -37,8 +37,8 @@ const resetPwdForm = reactive<Api.UserAdmin.AdminResetUserPwdRequest>({
 const FormRules: Record<string, Rule[]> = {
     newPassword: [
         { required: true, message: "密码是必填项!", trigger: "blur" },
-        { min: 8, message: "密码长度不小于 8 位!", trigger: "blur" },
-        { max: 16, message: "密码长度不大于 16 位!", trigger: "blur" },
+        { min: PASSWORD_MIN_LENGTH, message: `密码长度不小于 ${PASSWORD_MIN_LENGTH} 位!`, trigger: "blur" },
+        { max: PASSWORD_MAX_LENGTH, message: `密码长度不大于 ${PASSWORD_MAX_LENGTH} 位!`, trigger: "blur" },
         { pattern: PWD_REGEX, message: "密码需包含大小写字母、数字和特殊字符", trigger: "blur" },
     ],
 };

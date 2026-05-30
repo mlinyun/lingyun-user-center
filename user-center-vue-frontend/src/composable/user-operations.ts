@@ -169,9 +169,9 @@ export const useUserOperations = () => {
             return null;
         }
 
-        const isImage = ["image/jpeg", "image/jpg", "image/png", "image/gif"].includes(file.type);
+        const isImage = ["image/jpg", "image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type);
         if (!isImage) {
-            messageUtils.error("只支持 JPG、PNG、GIF 格式的图片！");
+            messageUtils.error("只支持 JPG、JPEG、PNG、WEBP、GIF 格式的图片！");
             return null;
         }
 

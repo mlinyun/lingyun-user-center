@@ -24,4 +24,4 @@ export {
 } from "./system";
 
 // 正则相关
-export { PWD_REGEX, PHONE_REGEX, CODE_REGEX } from "./validation";
+export { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, PWD_REGEX, PHONE_REGEX, CODE_REGEX } from "./validation";
