@@ -47,7 +47,7 @@ mybatis-plus:
     enable-sql-runner: true
     db-config:
       id-type: assign_id
-      logic-delete-field: isDeleted
+      logic-delete-field: isDelete
       logic-not-delete-value: 0
       logic-delete-value: 1
 

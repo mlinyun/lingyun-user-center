@@ -17,6 +17,8 @@ import com.mlinyun.usercenterbackend.service.SmsService;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,11 +58,39 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaLogMapper, CaptchaLog
      */
     private static final DefaultRedisScript<Long> INCR_WITH_TTL_SCRIPT;
 
+    /**
+     * Lua 脚本：回滚验证码发送过程中的 Redis 状态.
+     *
+     * <p>
+     * 发送邮件/短信失败时，需要撤销本次发送锁、验证码和小时级限流计数，避免用户因为外部服务失败而被误限流。验证码删除前会先校验 {@code ARGV[2]}，防止长耗时发送失败后误删后续请求生成的新验证码。
+     * </p>
+     *
+     * <ul>
+     * <li>KEYS[1] = 发送锁 Key</li>
+     * <li>KEYS[2] = 小时级限流计数 Key</li>
+     * <li>KEYS[3] = 验证码 Key</li>
+     * <li>KEYS[4] = 验证失败次数 Key</li>
+     * <li>ARGV[1] = 本次发送锁 Token</li>
+     * <li>ARGV[2] = 本次生成的验证码；为空时只回滚锁与限流计数</li>
+     * </ul>
+     */
+    private static final DefaultRedisScript<Long> ROLLBACK_SEND_STATE_SCRIPT;
+
     static {
         INCR_WITH_TTL_SCRIPT = new DefaultRedisScript<>();
         INCR_WITH_TTL_SCRIPT.setScriptText("local count = redis.call('INCR', KEYS[1]) " + "if count == 1 then "
                 + "  redis.call('EXPIRE', KEYS[1], ARGV[1]) " + "end " + "return count");
         INCR_WITH_TTL_SCRIPT.setResultType(Long.class);
+
+        ROLLBACK_SEND_STATE_SCRIPT = new DefaultRedisScript<>();
+        ROLLBACK_SEND_STATE_SCRIPT
+                .setScriptText("if redis.call('GET', KEYS[1]) == ARGV[1] then " + "  redis.call('DEL', KEYS[1]) "
+                        + "end " + "if ARGV[2] ~= '' then " + "  if redis.call('GET', KEYS[3]) ~= ARGV[2] then "
+                        + "    return -1 " + "  end " + "  redis.call('DEL', KEYS[3]) "
+                        + "  redis.call('DEL', KEYS[4]) " + "end " + "if redis.call('EXISTS', KEYS[2]) == 0 then "
+                        + "  return 0 " + "end " + "local count = redis.call('DECR', KEYS[2]) " + "if count <= 0 then "
+                        + "  redis.call('DEL', KEYS[2]) " + "  return 0 " + "end " + "return count");
+        ROLLBACK_SEND_STATE_SCRIPT.setResultType(Long.class);
     }
 
     /**
@@ -105,44 +135,54 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaLogMapper, CaptchaLog
         // setIfAbsent 等价于 Redis 的 SET key value NX EX，在单条命令中完成"检查是否存在 + 加锁"，
         // 彻底消除先 hasKey() 再 set() 之间的竞态窗口
         String lockKey = buildLockKey(type, target);
-        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", CaptchaConstant.LOCK_TTL_SECONDS,
+        String lockToken = UUID.randomUUID().toString();
+        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, lockToken, CaptchaConstant.LOCK_TTL_SECONDS,
                 TimeUnit.SECONDS);
         if (Boolean.FALSE.equals(acquired)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, CaptchaConstant.CODE_SEND_TOO_FREQUENT);
         }
 
+        String limitKey = buildLimitKey(type, target);
+        String captchaKey = buildCaptchaKey(scene, type, target);
+        String attemptKey = buildAttemptKey(scene, type, target);
+
         // 2. 原子操作：小时级限流计数（Lua 脚本保证 INCR + EXPIRE 原子执行）
         // 使用 Lua 脚本将递增计数和设置 TTL 合并为原子操作，
         // 避免 increment() 后、expire() 前进程崩溃导致 Key 永久堆积
-        String limitKey = buildLimitKey(type, target);
         Long count = redisTemplate.execute(INCR_WITH_TTL_SCRIPT, Collections.singletonList(limitKey),
                 String.valueOf(CaptchaConstant.LIMIT_WINDOW_SECONDS));
         if (count != null && count > CaptchaConstant.LIMIT_MAX_COUNT) {
+            rollbackSendState(lockKey, limitKey, captchaKey, attemptKey, lockToken, null, type, scene, target);
             throw new BusinessException(ErrorCode.PARAMS_ERROR, CaptchaConstant.CODE_SEND_LIMIT_EXCEEDED);
         }
 
         // 3. 生成 6 位数字验证码
         String code = generateCode();
+        boolean captchaStored = false;
+        try {
+            // 4. 存储验证码到 Redis（带 5 分钟 TTL）
+            redisTemplate.opsForValue().set(captchaKey, code, CaptchaConstant.CODE_TTL_SECONDS, TimeUnit.SECONDS);
+            captchaStored = true;
 
-        // 4. 存储验证码到 Redis（带 5 分钟 TTL）
-        String captchaKey = buildCaptchaKey(scene, type, target);
-        redisTemplate.opsForValue().set(captchaKey, code, CaptchaConstant.CODE_TTL_SECONDS, TimeUnit.SECONDS);
+            // 5. 清除之前的验证次数计数
+            redisTemplate.delete(attemptKey);
 
-        // 7. 清除之前的验证次数计数
-        String attemptKey = buildAttemptKey(scene, type, target);
-        redisTemplate.delete(attemptKey);
-
-        // 8. 根据类型调用对应的发送服务
-        if (CaptchaTypeEnum.EMAIL.equals(type)) {
-            emailService.sendCaptchaEmail(target, code, scene.getDesc());
-        } else if (CaptchaTypeEnum.SMS.equals(type)) {
-            smsService.sendCaptchaSms(target, code, scene);
-        } else {
-            // 理论上不应该出现其他类型，如果出现则抛出异常
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的验证码类型");
+            // 6. 根据类型调用对应的发送服务
+            if (CaptchaTypeEnum.EMAIL.equals(type)) {
+                emailService.sendCaptchaEmail(target, code, scene.getDesc());
+            } else if (CaptchaTypeEnum.SMS.equals(type)) {
+                smsService.sendCaptchaSms(target, code, scene);
+            } else {
+                // 理论上不应该出现其他类型，如果出现则抛出异常
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的验证码类型");
+            }
+        } catch (RuntimeException e) {
+            rollbackSendState(lockKey, limitKey, captchaKey, attemptKey, lockToken, captchaStored ? code : null, type,
+                    scene, target);
+            throw e;
         }
 
-        // 9. 写入发送日志到数据库（用于安全审计）
+        // 7. 写入发送日志到数据库（用于安全审计）
         saveSendLog(type, scene, target, ipAddress);
 
         log.info("验证码已发送: type={}, scene={}, target={}", type.getValue(), scene.getValue(), maskTarget(target));
@@ -263,6 +303,34 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaLogMapper, CaptchaLog
         }
     }
 
+    /**
+     * 回滚验证码发送过程中的 Redis 状态.
+     *
+     * @param lockKey 发送锁 Key
+     * @param limitKey 小时级限流计数 Key
+     * @param captchaKey 验证码 Key
+     * @param attemptKey 验证失败次数 Key
+     * @param lockToken 本次发送锁 Token
+     * @param code 本次生成的验证码；为空时只回滚锁与限流计数
+     * @param type 验证码类型
+     * @param scene 使用场景
+     * @param target 发送目标
+     */
+    private void rollbackSendState(String lockKey, String limitKey, String captchaKey, String attemptKey,
+            String lockToken, String code, CaptchaTypeEnum type, CaptchaSceneEnum scene, String target) {
+        try {
+            Long result = redisTemplate.execute(ROLLBACK_SEND_STATE_SCRIPT,
+                    List.of(lockKey, limitKey, captchaKey, attemptKey), lockToken, code == null ? "" : code);
+            if (result != null && result < 0) {
+                log.warn("验证码发送状态回滚跳过: type={}, scene={}, target={}", type.getValue(), scene.getValue(),
+                        maskTarget(target));
+            }
+        } catch (Exception e) {
+            log.warn("验证码发送状态回滚失败: type={}, scene={}, target={}", type.getValue(), scene.getValue(), maskTarget(target),
+                    e);
+        }
+    }
+
     // ==================== Redis Key 构建 ====================
 
     /**
@@ -318,5 +386,4 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaLogMapper, CaptchaLog
         }
         return target.substring(0, 2) + "****" + target.substring(target.length() - 2);
     }
-
 }

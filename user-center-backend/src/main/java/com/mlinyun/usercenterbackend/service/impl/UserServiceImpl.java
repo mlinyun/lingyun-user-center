@@ -698,8 +698,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean updateResult = this.updateById(latestUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, UserConstant.RESET_CREDENTIAL_FAILED_MSG);
 
-        // 10. 密码更新后应主动使已有会话失效（强制重新登录）
+        // 10. 密码更新后应主动使已有的所有会话失效
         this.userLogout(request);
+        this.expireUserSessions(userId);
 
         // 11. 返回更新结果
         return true;
@@ -798,8 +799,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean updateResult = this.updateById(updateUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, UserConstant.RESET_CREDENTIAL_FAILED_MSG);
 
-        // 6. 密码更新后应主动使已有会话失效（强制重新登录）
+        // 6. 密码更新后应主动使已有的所有会话失效
         this.userLogout(request);
+        this.expireUserSessions(user.getId());
 
         // 7. 返回更新结果
         return true;
@@ -1052,11 +1054,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean adminUpdateUserInfo(AdminUpdateUserInfoRequest adminUpdateUserInfoRequest) {
         // 通过用户 ID 检查用户是否存在
         User user = this.getUserByIdAndThrow(adminUpdateUserInfoRequest.getId());
+        UserRoleEnum oldRole = user.getUserRole();
         // 只更新允许修改的字段，且不覆盖未传递的字段
         userConverter.updateUserFromAdminRequest(adminUpdateUserInfoRequest, user);
         // 执行更新
         boolean updateResult = this.updateById(user);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "用户信息更新失败，数据库更新异常");
+        // 如果用户角色发生变化，则需要清理用户会话，强制用户重新登录，以更新权限信息
+        boolean securityChanged = ObjectUtil.equals(oldRole, user.getUserRole());
+        if (!securityChanged) {
+            expireUserSessions(user.getId());
+        }
         return true;
     }
 
