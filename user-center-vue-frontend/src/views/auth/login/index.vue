@@ -24,7 +24,7 @@ import {
 } from "@/constants";
 import type { Rule } from "ant-design-vue/es/form";
 import type { AxiosResponse } from "axios";
-import { userEmailLogin, userLogin, userPhoneLogin } from "@/api/user.ts";
+import { userEmailLogin, userLogin, userPhoneLogin, userEmailResetPwd, userPhoneResetPwd } from "@/api/user.ts";
 import { useAuthStore } from "@/stores/auth.ts";
 import type { FormInstance } from "ant-design-vue";
 import { useCaptchaSender } from "@/composable/send-captcha.ts";
@@ -68,6 +68,8 @@ type SubmitState = {
     accountBtn: boolean;
     emailBtn: boolean;
     phoneBtn: boolean;
+    emailResetBtn: boolean;
+    phoneResetBtn: boolean;
 };
 
 // 提交状态
@@ -75,6 +77,8 @@ const submitting = reactive<SubmitState>({
     accountBtn: false,
     emailBtn: false,
     phoneBtn: false,
+    emailResetBtn: false,
+    phoneResetBtn: false,
 });
 
 // 表单验证规则
@@ -168,11 +172,144 @@ const handlePhoneSubmit = async () => {
     await createSubmitHandler(userPhoneLogin, phoneForm, submitting, "phoneBtn")();
 };
 
-// 邮箱验证码发送器实例
+// 邮箱验证码发送器实例（登录）
 const emailCaptchaSender = useCaptchaSender("EMAIL", "LOGIN", () => emailForm.userEmail, "请输入邮箱地址以获取验证码");
 
-// 手机号验证码发送器实例
+// 手机号验证码发送器实例（登录）
 const phoneCaptchaSender = useCaptchaSender("SMS", "LOGIN", () => phoneForm.userPhone, "请输入手机号以获取验证码");
+
+// ========== 忘记密码弹窗相关 ==========
+// 控制弹窗显示
+const showResetModal = ref(false);
+const resetActiveKey = ref("email");
+
+// 重置 - 邮箱表单
+const emailResetFormRef = ref<FormInstance>();
+const emailResetForm = reactive<{ userEmail: string; captchaCode: string; newPassword: string; checkPassword: string }>(
+    {
+        userEmail: "",
+        captchaCode: "",
+        newPassword: "",
+        checkPassword: "",
+    }
+);
+
+// 重置 - 手机表单
+const phoneResetFormRef = ref<FormInstance>();
+const phoneResetForm = reactive<{ userPhone: string; captchaCode: string; newPassword: string; checkPassword: string }>(
+    {
+        userPhone: "",
+        captchaCode: "",
+        newPassword: "",
+        checkPassword: "",
+    }
+);
+
+// 验证码发送器（重置场景）
+const emailResetCaptchaSender = useCaptchaSender(
+    "EMAIL",
+    "RESET_PWD",
+    () => emailResetForm.userEmail,
+    "请输入邮箱地址以获取验证码"
+);
+const phoneResetCaptchaSender = useCaptchaSender(
+    "SMS",
+    "RESET_PWD",
+    () => phoneResetForm.userPhone,
+    "请输入手机号以获取验证码"
+);
+
+// 重置表单校验规则
+const emailResetRules: Record<string, Rule[]> = {
+    userEmail: FormRules.userEmail!,
+    captchaCode: FormRules.captchaCode!,
+    newPassword: FormRules.userPassword!,
+    checkPassword: [
+        { required: true, message: "请确认新密码!", trigger: "blur" },
+        {
+            validator: (_rule, value) => {
+                if (value !== emailResetForm.newPassword) {
+                    return Promise.reject("两次输入的密码不一致!");
+                }
+                return Promise.resolve();
+            },
+            trigger: "blur",
+        },
+    ],
+};
+
+const phoneResetRules: Record<string, Rule[]> = {
+    userPhone: FormRules.userPhone!,
+    captchaCode: FormRules.captchaCode!,
+    newPassword: FormRules.userPassword!,
+    checkPassword: [
+        { required: true, message: "请确认新密码!", trigger: "blur" },
+        {
+            validator: (_rule, value) => {
+                if (value !== phoneResetForm.newPassword) {
+                    return Promise.reject("两次输入的密码不一致!");
+                }
+                return Promise.resolve();
+            },
+            trigger: "blur",
+        },
+    ],
+};
+
+// 处理邮箱重置提交
+const handleEmailResetSubmit = async () => {
+    await emailResetFormRef.value?.validate();
+    submitting.emailResetBtn = true;
+    try {
+        const payload = {
+            userEmail: emailResetForm.userEmail,
+            captchaCode: emailResetForm.captchaCode,
+            newPassword: emailResetForm.newPassword,
+            checkPassword: emailResetForm.checkPassword,
+        } as Api.User.UserEmailResetPwdRequest;
+
+        const { data } = await userEmailResetPwd(payload);
+        if (data.code === BusinessCode.SUCCESS && data.success) {
+            showResetModal.value = false;
+            // 清理表单
+            emailResetForm.userEmail = "";
+            emailResetForm.captchaCode = "";
+            emailResetForm.newPassword = "";
+            emailResetForm.checkPassword = "";
+        }
+    } catch (error) {
+        console.log(`重置密码异常：${error}`);
+    } finally {
+        submitting.emailResetBtn = false;
+    }
+};
+
+// 处理手机号重置提交
+const handlePhoneResetSubmit = async () => {
+    await phoneResetFormRef.value?.validate();
+    submitting.phoneResetBtn = true;
+    try {
+        const payload = {
+            userPhone: phoneResetForm.userPhone,
+            captchaCode: phoneResetForm.captchaCode,
+            newPassword: phoneResetForm.newPassword,
+            checkPassword: phoneResetForm.checkPassword,
+        } as Api.User.UserPhoneResetPwdRequest;
+
+        const { data } = await userPhoneResetPwd(payload);
+        if (data.code === BusinessCode.SUCCESS && data.success) {
+            showResetModal.value = false;
+            phoneResetForm.userPhone = "";
+            phoneResetForm.captchaCode = "";
+            phoneResetForm.newPassword = "";
+            phoneResetForm.checkPassword = "";
+        }
+    } catch (error) {
+        console.log(`重置密码异常：${error}`);
+    } finally {
+        submitting.phoneResetBtn = false;
+    }
+};
 </script>
 
 <template>
@@ -182,6 +319,8 @@ const phoneCaptchaSender = useCaptchaSender("SMS", "LOGIN", () => phoneForm.user
                 <div class="login-footer">
                     <span>还没有账号？</span>
                     <router-link :to="ROUTES.REGISTER.path">立即注册</router-link>
+                    <span style="margin: 0 8px">|</span>
+                    <a @click="showResetModal = true">忘记密码</a>
                 </div>
             </template>
             <a-tabs v-model:activeKey="activeKey" centered>
@@ -343,6 +482,175 @@ const phoneCaptchaSender = useCaptchaSender("SMS", "LOGIN", () => phoneForm.user
                 </a-tab-pane>
             </a-tabs>
         </a-card>
+        <!-- 忘记密码弹窗 -->
+        <a-modal
+            v-model:visible="showResetModal"
+            title="重置密码"
+            :destroyOnClose="true"
+            :footer="null"
+            width="520px"
+            @cancel="() => (showResetModal = false)"
+        >
+            <a-tabs v-model:activeKey="resetActiveKey" centered>
+                <a-tab-pane key="email" tab="邮箱重置">
+                    <a-form
+                        ref="emailResetFormRef"
+                        :model="emailResetForm"
+                        @finish="handleEmailResetSubmit"
+                        :label-col="labelCol"
+                        :wrapper-col="wrapperCol"
+                    >
+                        <a-form-item name="userEmail" :rules="emailResetRules.userEmail">
+                            <a-input
+                                v-model:value="emailResetForm.userEmail"
+                                size="large"
+                                placeholder="请输入邮箱地址"
+                                allow-clear
+                            >
+                                <template #prefix><MailOutlined /></template>
+                            </a-input>
+                        </a-form-item>
+
+                        <a-form-item name="captchaCode" :rules="emailResetRules.captchaCode">
+                            <div class="captcha-wrapper">
+                                <a-input
+                                    v-model:value="emailResetForm.captchaCode"
+                                    size="large"
+                                    placeholder="请输入验证码"
+                                    allow-clear
+                                >
+                                    <template #prefix><SafetyCertificateOutlined /></template>
+                                </a-input>
+                                <a-button
+                                    size="large"
+                                    :disabled="emailResetCaptchaSender.countdown.value > 0"
+                                    :loading="emailResetCaptchaSender.sending.value"
+                                    @click="emailResetCaptchaSender.send()"
+                                >
+                                    {{
+                                        emailResetCaptchaSender.countdown.value > 0
+                                            ? `${emailResetCaptchaSender.countdown.value}秒后重试`
+                                            : "获取验证码"
+                                    }}
+                                </a-button>
+                            </div>
+                        </a-form-item>
+
+                        <a-form-item name="newPassword" :rules="emailResetRules.newPassword">
+                            <a-input-password
+                                v-model:value="emailResetForm.newPassword"
+                                size="large"
+                                placeholder="请输入新密码"
+                                allow-clear
+                            >
+                                <template #prefix><LockOutlined /></template>
+                            </a-input-password>
+                        </a-form-item>
+
+                        <a-form-item name="checkPassword" :rules="emailResetRules.checkPassword">
+                            <a-input-password
+                                v-model:value="emailResetForm.checkPassword"
+                                size="large"
+                                placeholder="确认新密码"
+                                allow-clear
+                            >
+                                <template #prefix><LockOutlined /></template>
+                            </a-input-password>
+                        </a-form-item>
+
+                        <a-form-item>
+                            <a-button
+                                type="primary"
+                                html-type="submit"
+                                size="large"
+                                block
+                                :loading="submitting.emailResetBtn"
+                                >确定</a-button
+                            >
+                        </a-form-item>
+                    </a-form>
+                </a-tab-pane>
+
+                <a-tab-pane key="phone" tab="手机号重置">
+                    <a-form
+                        ref="phoneResetFormRef"
+                        :model="phoneResetForm"
+                        @finish="handlePhoneResetSubmit"
+                        :label-col="labelCol"
+                        :wrapper-col="wrapperCol"
+                    >
+                        <a-form-item name="userPhone" :rules="phoneResetRules.userPhone">
+                            <a-input
+                                v-model:value="phoneResetForm.userPhone"
+                                size="large"
+                                placeholder="请输入手机号"
+                                allow-clear
+                            >
+                                <template #prefix><MobileOutlined /></template>
+                            </a-input>
+                        </a-form-item>
+
+                        <a-form-item name="captchaCode" :rules="phoneResetRules.captchaCode">
+                            <div class="captcha-wrapper">
+                                <a-input
+                                    v-model:value="phoneResetForm.captchaCode"
+                                    size="large"
+                                    placeholder="请输入验证码"
+                                    allow-clear
+                                >
+                                    <template #prefix><SafetyCertificateOutlined /></template>
+                                </a-input>
+                                <a-button
+                                    size="large"
+                                    :disabled="phoneResetCaptchaSender.countdown.value > 0"
+                                    :loading="phoneResetCaptchaSender.sending.value"
+                                    @click="phoneResetCaptchaSender.send()"
+                                >
+                                    {{
+                                        phoneResetCaptchaSender.countdown.value > 0
+                                            ? `${phoneResetCaptchaSender.countdown.value}秒后重试`
+                                            : "获取验证码"
+                                    }}
+                                </a-button>
+                            </div>
+                        </a-form-item>
+
+                        <a-form-item name="newPassword" :rules="phoneResetRules.newPassword">
+                            <a-input-password
+                                v-model:value="phoneResetForm.newPassword"
+                                size="large"
+                                placeholder="请输入新密码"
+                                allow-clear
+                            >
+                                <template #prefix><LockOutlined /></template>
+                            </a-input-password>
+                        </a-form-item>
+
+                        <a-form-item name="checkPassword" :rules="phoneResetRules.checkPassword">
+                            <a-input-password
+                                v-model:value="phoneResetForm.checkPassword"
+                                size="large"
+                                placeholder="确认新密码"
+                                allow-clear
+                            >
+                                <template #prefix><LockOutlined /></template>
+                            </a-input-password>
+                        </a-form-item>
+
+                        <a-form-item>
+                            <a-button
+                                type="primary"
+                                html-type="submit"
+                                size="large"
+                                block
+                                :loading="submitting.phoneResetBtn"
+                                >确定</a-button
+                            >
+                        </a-form-item>
+                    </a-form>
+                </a-tab-pane>
+            </a-tabs>
+        </a-modal>
     </div>
 </template>
 

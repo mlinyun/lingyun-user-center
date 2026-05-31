@@ -1,6 +1,3 @@
-packages:
-  - "user-center-vue-frontend"
-
 allowBuilds:
   core-js: true
   es5-ext: true
