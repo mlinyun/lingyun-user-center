@@ -12,4 +12,10 @@ dist/
 # Ignore node modules
 node_modules/
 
+# AI generated files
 .github/copilot-instructions.md
+CLAUDE.md
+
+# Ignore environment-specific configuration files
+user-center-backend/src.main/resources/application-local.yaml
+

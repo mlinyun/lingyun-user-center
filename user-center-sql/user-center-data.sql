@@ -18,5 +18,5 @@ INSERT INTO `user` (`id`, `userAccount`, `userPassword`, `userName`, `userAvatar
                     `createTime`, `updateTime`, `isDelete`)
 VALUES (2056222492040679425, 'LingYun001', '$2a$12$F7TvzN9xjVwQm/imo14iS.bhZJ5z0.HU/64Rb6BXqXGIN/EzmLEyW', 'LingYun001',
         'https://static.mlinyun.com/user-center/avatar/default/avatar.png', '这个人很懒，什么都没有留下~', 'user', 0,
-        15600000001, 'lingyun001@qq.com', 1, 1, 0, '2026-05-18 13:09:06', '2026-05-18 11:56:59', '2026-05-18 15:41:44',
+        '15600000001', 'lingyun001@qq.com', 1, 1, 0, '2026-05-18 13:09:06', '2026-05-18 11:56:59', '2026-05-18 15:41:44',
         0);

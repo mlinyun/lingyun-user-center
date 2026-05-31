@@ -29,7 +29,7 @@ public final class PasswordUtils {
      * 私有构造函数，防止实例化.
      */
     private PasswordUtils() {
-        throw new UnsupportedOperationException("Utility class");
+        throw new IllegalStateException("Utility class");
     }
 
     // ==================== BCrypt 配置 ====================

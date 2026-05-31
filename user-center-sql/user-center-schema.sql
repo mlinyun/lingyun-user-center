@@ -10,6 +10,8 @@ CREATE DATABASE IF NOT EXISTS `user_center`
 
 -- 创建专属用户：user_center_user
 CREATE USER IF NOT EXISTS 'user_center_user'@'%' IDENTIFIED BY 'StrongPassword..1024';
+-- 如果用户已存在但密码不正确，可以使用下面的命令更新密码
+-- ALTER USER 'user_center_user'@'%' IDENTIFIED BY 'StrongPassword..1024';
 
 -- 授权专属用户：允许 user_center_user 用户对 user_center 数据库的所有操作权限
 GRANT ALL PRIVILEGES ON `user_center`.* TO 'user_center_user'@'%';

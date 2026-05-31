@@ -73,7 +73,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 用户信息表 服务层实现.
  *
  * <p>
- * 该类主要用于实现用户信息表相关的业务逻辑，继承了 MyBatis Flex 提供的 ServiceImpl 类，简化了 CRUD 操作的实现
+ * 该类主要用于实现用户信息表相关的业务逻辑，继承了 MyBatis Plus 提供的 ServiceImpl 类，简化了 CRUD 操作的实现
  * </p>
  */
 @Slf4j
@@ -623,20 +623,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 4. 获取最新的用户信息
         User latestUser = this.getById(userId);
 
-        // 4. 只更新允许修改的字段，且不覆盖未传递的字段
+        // 5. 只更新允许修改的字段，且不覆盖未传递的字段
         userConverter.updateUserFromRequest(userUpdateInfoRequest, latestUser);
         // 修改用户用户信息后需要更新编辑时间
         latestUser.setEditTime(LocalDateTime.now());
 
-        // 5. 执行更新
+        // 6. 执行更新
         boolean updateResult = this.updateById(latestUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.SYSTEM_ERROR, "用户信息更新失败，数据库更新异常");
 
-        // 6. 重新从数据库获取最新的用户信息，再更新 Session，保证数据一致性
+        // 7. 重新从数据库获取最新的用户信息，再更新 Session，保证数据一致性
         UserLoginVo latesUserLoginVo = this.userConverter.toUserLoginVo(this.getById(userId));
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, latesUserLoginVo);
 
-        // 7. 返回更新结果
+        // 8. 返回更新结果
         return true;
     }
 
@@ -844,23 +844,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         ThrowUtils.throwIf(file.getSize() > UserConstant.AVATAR_MAX_FILE_SIZE, ErrorCode.PARAMS_ERROR,
                 UserConstant.AVATAR_FILE_TOO_LARGE_MSG);
 
-        // 2. 校验文件扩展名
+        // 3. 校验文件扩展名
         String fileSuffix = FileUtil.getSuffix(file.getOriginalFilename()); // 获取文件扩展名（不带点）
         // 允许上传的文件扩展名列表（小写）
         boolean extensionAllowed = UserConstant.AVATAR_ALLOWED_EXTENSIONS.contains(fileSuffix);
         ThrowUtils.throwIf(!extensionAllowed, ErrorCode.PARAMS_ERROR, UserConstant.AVATAR_FILE_TYPE_INVALID_MSG);
 
-        // 3. 构造图片上传路径
+        // 4. 构造图片上传路径
         // 生成一个随机的 UUID 作为文件名的一部分，去掉其中的连字符
         String uuid = UUID.randomUUID().toString().replace("-", "");
         String objectKey = String.format(UserConstant.AVATAR_UPLOAD_PATH + "/%d/%s.%s", userId, uuid, fileSuffix);
 
-        // 4. 上传文件到对象存储
+        // 5. 上传文件到对象存储
         File tempFile = null;
         // 需要回写的头像 URL
         String avatarUrl;
         // 原始头像 URL
         String originalAvatarUrl = cosClientConfig.getHost() + "/" + objectKey;
+        // 初始化压缩图 URL，默认为 null
+        String compressedAvatarUrl = null;
         // 初始化缩略图 URL，默认为 null
         String thumbnailAvatarUrl = null;
         try {
@@ -878,6 +880,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (CollUtil.isNotEmpty(ciObjectList)) {
                 // 缩略图默认为压缩图
                 CIObject thumbnailCiObject = ciObjectList.getFirst();
+                compressedAvatarUrl = cosClientConfig.getHost() + "/" + ciObjectList.getFirst().getKey();
                 // 如果处理结果中包含缩略图，则使用缩略图作为头像 URL（因为缩略图的尺寸更小，更适合作为头像）
                 if (ciObjectList.size() > 1) {
                     thumbnailCiObject = ciObjectList.get(1);
@@ -901,7 +904,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             this.deleteTempFile(tempFile);
         }
 
-        // 5. 回写头像 URL 到数据库
+        // 6. 回写头像 URL 到数据库
         User updateUser = new User();
         updateUser.setId(userId);
         updateUser.setUserAvatar(avatarUrl);
@@ -910,7 +913,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!updateResult) {
             // 清理 COS 中已上传的图片，避免垃圾数据
             try {
+                // 删除原图
                 cosManager.deleteObject(objectKey);
+                // 删除压缩图（如果存在）
+                if (compressedAvatarUrl != null) {
+                    String compressedObjectKey = compressedAvatarUrl.replace(cosClientConfig.getHost() + "/", "");
+                    cosManager.deleteObject(compressedObjectKey);
+                }
+                // 删除缩略图（如果存在）
+                if (thumbnailAvatarUrl != null) {
+                    String thumbnailObjectKey = thumbnailAvatarUrl.replace(cosClientConfig.getHost() + "/", "");
+                    cosManager.deleteObject(thumbnailObjectKey);
+                }
                 log.info("用户头像上传失败，已删除 COS 中的图片, objectKey={}", objectKey);
             } catch (Exception e) {
                 log.error("用户头像上传失败，数据库更新异常，删除 COS 中的图片失败, objectKey={}", objectKey, e);
@@ -918,7 +932,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "头像更新失败，数据库更新异常");
         }
 
-        // 6. 返回头像 URL
+        // 7. 返回头像 URL
         return avatarUrl;
     }
 
@@ -1121,7 +1135,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 模糊查询
         queryWrapper.like(ObjectUtil.isNotEmpty(userName), UserFields.USER_NAME, userName)
-                .eq(ObjectUtil.isNotEmpty(userProfile), UserFields.USER_PROFILE, userProfile);
+                .like(ObjectUtil.isNotEmpty(userProfile), UserFields.USER_PROFILE, userProfile);
 
         // 时间范围查询
         queryWrapper.ge(ObjectUtil.isNotEmpty(createTimeStart), BaseFields.CREATE_TIME, createTimeStart)
@@ -1188,38 +1202,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 管理员封禁或解封用户.
      *
      * @param adminBanUserRequest {@linkplain AdminBanUserRequest 管理员封禁或解封用户请求体}
+     * @param request {@linkplain HttpServletRequest HTTP 请求对象}
      * @return 是否操作成功
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean adminBanOrUnbanUser(AdminBanUserRequest adminBanUserRequest) {
+    public boolean adminBanOrUnbanUser(AdminBanUserRequest adminBanUserRequest, HttpServletRequest request) {
         // 1. 获取请求体中的参数
         Long userId = adminBanUserRequest.getId();
         Integer userStatus = adminBanUserRequest.getUserStatus();
 
-        // 2. 查询用户是否存在
+        // 2. 获取当前登录用户
+        UserLoginVo loginUser = this.getLoginUser(request);
+        ThrowUtils.throwIf(loginUser.getId().equals(userId), ErrorCode.NOT_AUTH_ERROR, "管理员不能封禁或解封自己");
+
+        // 3. 查询用户是否存在
         User user = this.getUserByIdAndThrow(userId);
 
-        // 3. 检查当前用户状态是否与请求状态相同
+        // 4. 检查当前用户状态是否与请求状态相同
         Integer currentUserStatus = user.getUserStatus();
         if (currentUserStatus != null && currentUserStatus.equals(userStatus)) {
             String statusDesc = UserStatusEnum.getStatusByValue(currentUserStatus);
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户已处于" + statusDesc + "状态，无需重复操作");
         }
 
-        // 4. 执行封禁或解封操作
+        // 5. 执行封禁或解封操作
         User updateUser = new User();
         updateUser.setId(userId);
         updateUser.setUserStatus(userStatus);
         boolean updateResult = this.updateById(updateUser);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "用户封禁或解封失败，数据库更新异常");
 
-        // 5. 如果是封禁用户，则主动使该用户的已有会话失效（强制用户退出登录）
+        // 6. 如果是封禁用户，则主动使该用户的已有会话失效（强制用户退出登录）
         if (UserStatusEnum.isBanned(userStatus)) {
             expireUserSessions(userId);
         }
 
-        // 6. 返回操作结果
+        // 7. 返回操作结果
         return true;
     }
 

@@ -40,9 +40,9 @@ public class CosManager {
     private static final int THUMBNAIL_SIZE = 256;
 
     /**
-     * 生成缩略图的最小文件大小（2KB）.
+     * 生成缩略图的最小文件大小（20KB）.
      */
-    private static final int MINIMUM_THUMBNAIL_FILE_SIZE = 2 * 1024;
+    private static final int MINIMUM_THUMBNAIL_FILE_SIZE = 20 * 1024;
 
     /**
      * 构造函数，注入 COS 客户端配置并初始化 COS 客户端.

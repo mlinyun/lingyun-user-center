@@ -39,7 +39,7 @@ public class SessionConfig {
     @Value("${server.servlet.session.cookie.http-only:true}")
     private boolean cookieHttpOnly;
 
-    @Value("${server.servlet.session.cookie.same-site:Lax}")
+    @Value("${server.servlet.session.cookie.same-site:Strict}")
     private String cookieSameSite;
 
     /**

@@ -30,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 用户信息表 服务层.
  *
  * <p>
- * 该接口定义了对用户信息表进行操作的方法，继承自 MyBatis Flex 的 IService 接口，提供了基本的 CRUD 操作
+ * 该接口定义了对用户信息表进行操作的方法，继承自 MyBatis Plus 的 IService 接口，提供了基本的 CRUD 操作
  * </p>
  */
 public interface UserService extends IService<User> {
@@ -221,9 +221,10 @@ public interface UserService extends IService<User> {
      * 管理员封禁或解封用户.
      *
      * @param adminBanUserRequest {@linkplain AdminBanUserRequest 管理员封禁或解封用户请求体}
+     * @param request {@linkplain HttpServletRequest HTTP 请求对象}
      * @return 是否操作成功
      */
-    boolean adminBanOrUnbanUser(AdminBanUserRequest adminBanUserRequest);
+    boolean adminBanOrUnbanUser(AdminBanUserRequest adminBanUserRequest, HttpServletRequest request);
 
     /**
      * 管理员上传或修改头像.

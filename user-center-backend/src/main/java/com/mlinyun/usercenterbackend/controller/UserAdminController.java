@@ -156,14 +156,16 @@ public class UserAdminController {
      * 管理员封禁或解封用户接口.
      *
      * @param adminBanUserRequest 管理员封禁或解封用户请求体
+     * @param request {@linkplain HttpServletRequest HTTP 请求对象}
      * @return 是否操作成功
      */
     @ApiOperationSupport(author = "LingYun")
     @PostMapping("/status")
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     @Operation(summary = "管理员封禁或解封用户", description = "管理员封禁或解封用户接口")
-    public BaseResponse<Boolean> adminBanOrUnbanUser(@RequestBody @Valid AdminBanUserRequest adminBanUserRequest) {
-        boolean result = userService.adminBanOrUnbanUser(adminBanUserRequest);
+    public BaseResponse<Boolean> adminBanOrUnbanUser(@RequestBody @Valid AdminBanUserRequest adminBanUserRequest,
+            HttpServletRequest request) {
+        boolean result = userService.adminBanOrUnbanUser(adminBanUserRequest, request);
         return ResultUtils.success(result);
     }
 

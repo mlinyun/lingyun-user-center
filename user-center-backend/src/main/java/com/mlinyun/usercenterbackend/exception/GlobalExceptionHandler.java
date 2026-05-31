@@ -6,10 +6,14 @@ import com.mlinyun.usercenterbackend.common.ResultUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.util.unit.DataSize;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -23,6 +27,12 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 上传文件的最大大小限制，单位为字节.
+     */
+    @Value("${spring.servlet.multipart.max-file-size}")
+    private DataSize maxFileSize;
 
     /**
      * 处理业务异常.
@@ -61,6 +71,21 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理上传文件过大异常.
+     *
+     * @param e 上传文件过大异常对象
+     * @return 统一格式的错误响应
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public BaseResponse<Object> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        // 记录异常信息
+        log.warn("MaxUploadSizeExceededException: message={}", e.getMessage());
+        long maxSizeMb = maxFileSize.toMegabytes();
+        // 返回错误响应
+        return ResultUtils.error(ErrorCode.PARAMS_ERROR, "上传文件大小超过限制，最大支持 " + maxSizeMb + "MB");
+    }
+
+    /**
      * 处理请求体不可读异常.
      *
      * @param e 请求体不可读异常对象
@@ -88,6 +113,26 @@ public class GlobalExceptionHandler {
     public BaseResponse<Object> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         // 记录异常信息
         log.error("MethodArgumentNotValidException: message={}", e.getMessage());
+        // 提取校验错误信息
+        String errorMessage = e.getBindingResult().getAllErrors().getFirst().getDefaultMessage();
+        // 返回错误响应
+        return ResultUtils.error(ErrorCode.PARAMS_ERROR, errorMessage);
+    }
+
+    /**
+     * 处理参数绑定校验异常.
+     *
+     * <p>
+     * 捕获 @ModelAttribute 或 GET 参数校验失败引发的异常，提取校验错误信息并返回给客户端
+     * </p>
+     *
+     * @param e 参数绑定校验异常对象
+     * @return 统一格式的错误响应
+     */
+    @ExceptionHandler(BindException.class)
+    public BaseResponse<Object> handleBindException(BindException e) {
+        // 记录异常信息
+        log.error("BindException: message={}", e.getMessage());
         // 提取校验错误信息
         String errorMessage = e.getBindingResult().getAllErrors().getFirst().getDefaultMessage();
         // 返回错误响应
