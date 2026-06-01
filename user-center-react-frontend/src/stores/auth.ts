@@ -100,6 +100,8 @@ const ensureCacheFreshness = (): void => {
 };
 
 const fetchCurrentUser = async (): Promise<void> => {
+  const wasAuthenticated = isAuthenticated();
+
   authState = {
     ...authState,
     authStatus: "checking",
@@ -118,10 +120,13 @@ const fetchCurrentUser = async (): Promise<void> => {
     }
     applyGuest();
   } catch {
-    if (isAuthenticated()) {
+    if (wasAuthenticated) {
+      // Transient failure — restore previous auth state so the user
+      // doesn't lose authentication due to a network hiccup or a
+      // timing issue (e.g. session cookie not yet propagated).
       authState = {
         ...authState,
-        authStatus: "unknown",
+        authStatus: "authenticated",
         lastValidatedAt: null,
       };
       syncAuthState();

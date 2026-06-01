@@ -119,7 +119,15 @@ export const layout: RunTimeLayoutConfig = ({
         }
 
         if (needsAuth) {
-          await authStore.bootstrap({ strict: true });
+          // When the user is already authenticated (e.g. just after login),
+          // use a non-strict bootstrap that respects the cache TTL to avoid
+          // an unnecessary server round-trip that could clear auth on a
+          // transient failure.
+          if (authStore.isAuthenticated()) {
+            await authStore.bootstrap();
+          } else {
+            await authStore.bootstrap({ strict: true });
+          }
 
           if (!authStore.isAuthenticated()) {
             history.replace(

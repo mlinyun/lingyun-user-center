@@ -3,14 +3,13 @@ import {
   EditOutlined,
   EyeOutlined,
   KeyOutlined,
-  LockOutlined,
   PlusOutlined,
   StopOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { PageContainer, ProTable } from "@ant-design/pro-components";
-import { App, Button, Dropdown, Modal, Tag } from "antd";
+import { App, Button, Dropdown, Tag } from "antd";
 import dayjs from "dayjs";
 import React, { useRef, useState } from "react";
 import { USER_ROLE, USER_STATUS } from "@/constants/user";
@@ -175,8 +174,12 @@ const UserManage: React.FC = () => {
                     label: isBanned ? "解封用户" : "封禁用户",
                     disabled: isAdmin,
                     onClick: async () => {
+                      if (!record.id) {
+                        message.error("用户ID不存在");
+                        return;
+                      }
                       const success = await handleAdminBanOrUnbanUser({
-                        id: record.id!,
+                        id: record.id,
                         userStatus: isBanned
                           ? USER_STATUS.NORMAL
                           : USER_STATUS.BANNED,
@@ -204,8 +207,12 @@ const UserManage: React.FC = () => {
                         okType: "danger",
                         cancelText: "取消",
                         onOk: async () => {
+                          if (!record.id) {
+                            message.error("用户ID不存在");
+                            return;
+                          }
                           const success = await handleAdminDeleteUser(
-                            record.id!,
+                            record.id,
                           );
                           if (success) {
                             message.success("删除成功");

@@ -1,7 +1,7 @@
 import { PictureOutlined, UserOutlined } from "@ant-design/icons";
 import { useModel } from "@umijs/max";
 import type { UploadProps } from "antd";
-import { Avatar, Card, Space, Typography, Upload } from "antd";
+import { Avatar, Card, Typography, Upload } from "antd";
 import { createStyles } from "antd-style";
 import React from "react";
 import { DEFAULT_AVATAR } from "@/constants";
