@@ -1,8 +1,10 @@
 import type { Configuration } from "lint-staged";
 import * as path from "node:path";
 
-// 前端项目的根目录路径
-const frontendRoot: string = "./user-center-vue-frontend";
+// vue 前端项目的根目录路径
+const vuefrontendRoot: string = "./user-center-vue-frontend";
+// React 前端项目的根目录路径
+const reactfrontendRoot: string = "./user-center-react-frontend";
 // 文档项目的根目录路径
 const docsRoot: string = "./user-center-docs";
 
@@ -43,11 +45,11 @@ const config: Configuration = {
      * @param files lint-staged 传入的文件路径数组
      * @returns 需要执行的命令数组，如果没有需要 lint 的文件则返回空数组
      */
-    [`${frontendRoot}/**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue}`]: (
+    [`${vuefrontendRoot}/**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue}`]: (
         files: readonly string[],
     ) => {
         // 将文件路径转换为相对于前端项目根目录的路径，并过滤掉不在前端项目中的文件
-        const frontendFiles = toRelative(files, frontendRoot);
+        const frontendFiles = toRelative(files, vuefrontendRoot);
         if (frontendFiles.length === 0) {
             return []; // 没有需要 lint 的文件，跳过本次检查
         }
@@ -55,11 +57,11 @@ const config: Configuration = {
         const args = toShellArgs(frontendFiles);
         return [
             // 使用 ESLint 进行代码检查，--fix 自动修复，--cache 启用缓存加速
-            `pnpm --dir ${frontendRoot} exec eslint --fix --cache ${args}`,
+            `pnpm --dir ${vuefrontendRoot} exec eslint --fix --cache ${args}`,
             // 使用 Oxlint 进行代码检查，--fix 自动修复
-            `pnpm --dir ${frontendRoot} exec oxlint --fix ${args}`,
+            `pnpm --dir ${vuefrontendRoot} exec oxlint --fix ${args}`,
             // 使用 Oxfmt 进行代码格式化
-            `pnpm --dir ${frontendRoot} exec oxfmt ${args}`,
+            `pnpm --dir ${vuefrontendRoot} exec oxfmt ${args}`,
         ];
     },
     /**
@@ -68,17 +70,17 @@ const config: Configuration = {
      * @param files lint-staged 传入的文件路径数组
      * @returns 需要执行的命令数组，如果没有需要 lint 的文件则返回空数组
      */
-    [`${frontendRoot}/**/*.{vue,css,scss,sass,less,styl}`]: (
+    [`${vuefrontendRoot}/**/*.{vue,css,scss,sass,less,styl}`]: (
         files: readonly string[],
     ) => {
-        const frontendFiles = toRelative(files, frontendRoot);
+        const frontendFiles = toRelative(files, vuefrontendRoot);
         if (frontendFiles.length === 0) {
             return [];
         }
         const args = toShellArgs(frontendFiles);
         return [
             // 使用 Stylelint 进行样式检查和修复
-            `pnpm --dir ${frontendRoot} exec stylelint --fix --custom-syntax postcss-html ${args}`,
+            `pnpm --dir ${vuefrontendRoot} exec stylelint --fix --custom-syntax postcss-html ${args}`,
         ];
     },
     /**
@@ -99,6 +101,14 @@ const config: Configuration = {
             // 使用 Prettier 进行代码格式化
             `pnpm --dir ${docsRoot} exec prettier --write ${args}`,
         ];
+    },
+    [`${reactfrontendRoot}/**/*.{js,jsx,tsx,ts,css,less,md}`]: (files: readonly string[]) => {
+        const reactFrontendFiles = toRelative(files, reactfrontendRoot);
+        if (reactFrontendFiles.length === 0) {
+            return [];
+        }
+        const args = toShellArgs(reactFrontendFiles);
+        return [`pnpm --dir ${reactfrontendRoot} exec biome check --write ${args}`];
     },
 };
 

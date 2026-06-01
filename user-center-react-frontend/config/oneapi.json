@@ -1,0 +1,2044 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "凌云用户中心系统API文档",
+    "description": "企业核心的用户中心系统，基于 Spring Boot 后端 + React/Vue 前端的 **全栈项目**，实现了用户注册、登录、查询等基础功能。",
+    "contact": {
+      "name": "mlinyun",
+      "url": "https://github.com/mlinyun",
+      "email": "lingyun2311@gmail.com"
+    },
+    "license": {
+      "name": "MIT License",
+      "url": "https://mit-license.org/"
+    },
+    "version": "v1.0.0"
+  },
+  "externalDocs": {
+    "description": "项目 GitHub 地址",
+    "url": "https://github.com/mlinyun/lingyun-user-center"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8100/api",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "MainController",
+      "description": "提供系统基础功能的接口"
+    },
+    {
+      "name": "UserController",
+      "description": "用户相关接口"
+    },
+    {
+      "name": "UserAdminController",
+      "description": "用户管理相关接口"
+    },
+    {
+      "name": "CaptchaController",
+      "description": "验证码相关接口"
+    }
+  ],
+  "paths": {
+    "/user/update-pwd": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "更新密码",
+        "description": "用户更新密码接口",
+        "operationId": "userUpdatePwd",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdatePwdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/update-info": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "更新用户信息",
+        "description": "更新用户信息接口",
+        "operationId": "userUpdateInfo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateInfoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/reset-pwd/phone": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "通过手机号重置密码",
+        "description": "通过短信验证码验证身份后重置密码",
+        "operationId": "userPhoneResetPwd",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPhoneResetPwdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/reset-pwd/email": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "通过邮箱重置密码",
+        "description": "通过邮箱验证码验证身份后重置密码",
+        "operationId": "userResetPwd",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserEmailResetPwdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/register/phone": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "手机号注册",
+        "description": "通过短信验证码注册",
+        "operationId": "userPhoneRegister",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPhoneRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseString"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/register/email": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "邮箱注册",
+        "description": "通过邮箱验证码注册",
+        "operationId": "userEmailRegister",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserEmailRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseString"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/register/account": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "用户注册",
+        "description": "通过账号和密码进行注册",
+        "operationId": "userRegister",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseString"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/logout": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "用户注销",
+        "description": "用户注销接口",
+        "operationId": "userLogout",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/login/phone": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "手机号验证码登录",
+        "description": "通过短信验证码登录，无需密码",
+        "operationId": "userPhoneLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPhoneLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserLoginVo"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/login/email": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "邮箱验证码登录",
+        "description": "通过邮箱验证码登录，无需密码",
+        "operationId": "userEmailLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserEmailLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserLoginVo"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/login/account": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "用户登录",
+        "description": "通过账号和密码进行登录",
+        "operationId": "userLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserLoginVo"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/bind/phone": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "绑定/换绑手机号",
+        "description": "用户绑定或换绑手机号，需提供新手机号及短信验证码",
+        "operationId": "userBindPhone",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserBindPhoneRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/bind/email": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "绑定/换绑邮箱",
+        "description": "用户绑定或换绑邮箱，需提供新邮箱及验证码",
+        "operationId": "userBindEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserBindEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/avatar": {
+      "post": {
+        "tags": ["UserController"],
+        "summary": "上传/修改头像",
+        "description": "上传头像文件并更新当前登录用户的头像",
+        "operationId": "userUploadAvatar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": ["file"],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "name": "file",
+                    "in": "query"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseString"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/captcha/send": {
+      "post": {
+        "tags": ["CaptchaController"],
+        "summary": "发送验证码",
+        "description": "发送邮箱或短信验证码，60秒内不可重复发送",
+        "operationId": "sendCaptcha",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendCaptchaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/admin/user/update": {
+      "post": {
+        "tags": ["UserAdminController"],
+        "summary": "管理员更新用户信息",
+        "description": "管理员更新用户信息接口",
+        "operationId": "adminUpdateUserInfo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdateUserInfoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/admin/user/status": {
+      "post": {
+        "tags": ["UserAdminController"],
+        "summary": "管理员封禁或解封用户",
+        "description": "管理员封禁或解封用户接口",
+        "operationId": "adminBanOrUnbanUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminBanUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/admin/user/reset": {
+      "post": {
+        "tags": ["UserAdminController"],
+        "summary": "管理员重置用户密码",
+        "description": "管理员重置用户密码接口",
+        "operationId": "adminResetUserPwd",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminResetUserPwdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/admin/user/page": {
+      "post": {
+        "tags": ["UserAdminController"],
+        "summary": "管理员分页获取用户列表",
+        "description": "管理员分页获取用户列表接口",
+        "operationId": "adminGetUserInfoByPage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminQueryUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePageUserVo"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/admin/user/get": {
+      "post": {
+        "tags": ["UserAdminController"],
+        "summary": "管理员根据 id 获取用户信息",
+        "description": "管理员根据 id 获取用户信息接口",
+        "operationId": "adminGetUserById",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetOrDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserVo"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/admin/user/delete": {
+      "post": {
+        "tags": ["UserAdminController"],
+        "summary": "管理员根据 id 删除用户",
+        "description": "管理员根据 id 删除用户接口",
+        "operationId": "adminDeleteUserById",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetOrDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseBoolean"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/admin/user/avatar": {
+      "post": {
+        "tags": ["UserAdminController"],
+        "summary": "管理员上传或修改头像",
+        "description": "管理员上传或修改头像接口",
+        "operationId": "adminUploadAvatar",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": ["file"],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "name": "file",
+                    "in": "query"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseString"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/admin/user/add": {
+      "post": {
+        "tags": ["UserAdminController"],
+        "summary": "管理员添加用户",
+        "description": "管理员添加用户接口",
+        "operationId": "adminAddUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminAddUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseString"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/user/current": {
+      "get": {
+        "tags": ["UserController"],
+        "summary": "获取登录用户信息",
+        "description": "获取登录用户信息接口",
+        "operationId": "getLoginUserInfo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserLoginVo"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["MainController"],
+        "summary": "健康检查",
+        "description": "用于检查系统是否正常运行",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseString"
+                }
+              }
+            }
+          }
+        },
+        "x-author": "LingYun"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserUpdatePwdRequest": {
+        "required": ["checkPassword", "id", "newPassword", "rawPassword"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户主键 ID，使用雪花算法生成",
+            "format": "int64",
+            "example": 386738996358914048,
+            "refType": null
+          },
+          "rawPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "原始密码",
+            "example": "Password..1234",
+            "refType": null
+          },
+          "newPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "新的密码",
+            "example": "Password..1234",
+            "refType": null
+          },
+          "checkPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "校验密码",
+            "example": "Password..1234",
+            "refType": null
+          }
+        },
+        "description": "用户更新密码请求参数"
+      },
+      "BaseResponseBoolean": {
+        "required": ["code", "message", "success"],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "请求是否成功",
+            "example": true,
+            "enum": [true, false]
+          },
+          "code": {
+            "type": "integer",
+            "description": "状态码",
+            "format": "int32",
+            "example": 20000
+          },
+          "message": {
+            "type": "string",
+            "description": "响应消息",
+            "nullable": true,
+            "example": "操作成功"
+          },
+          "data": {
+            "type": "boolean"
+          }
+        },
+        "description": "通用响应模型"
+      },
+      "UserUpdateInfoRequest": {
+        "required": ["id"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户主键 ID，使用雪花算法生成",
+            "format": "int64",
+            "example": 386738996358914048,
+            "refType": null
+          },
+          "userName": {
+            "maxLength": 20,
+            "minLength": 2,
+            "type": "string",
+            "description": "用户昵称",
+            "example": "凌云",
+            "refType": null
+          },
+          "userAvatar": {
+            "type": "string",
+            "description": "用户头像",
+            "example": "https://example.com/avatar.jpg",
+            "refType": null
+          },
+          "userProfile": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "description": "用户简介",
+            "example": "一名普通的程序员",
+            "refType": null
+          },
+          "userGender": {
+            "maximum": 2,
+            "minimum": 0,
+            "type": "integer",
+            "description": "性别（0女 1男 2未知）",
+            "format": "int32",
+            "example": 2,
+            "default": 2,
+            "enum": [0, 1, 2],
+            "refType": null
+          }
+        },
+        "description": "普通用户更新用户信息请求参数"
+      },
+      "UserPhoneResetPwdRequest": {
+        "required": [
+          "captchaCode",
+          "checkPassword",
+          "newPassword",
+          "userPhone"
+        ],
+        "type": "object",
+        "properties": {
+          "userPhone": {
+            "pattern": "^(?:\\+?86)?1(?:3\\d{3}|5[^4\\D]\\d{2}|8\\d{3}|7(?:[0-35-9]\\d{2}|4(?:0\\d|1[0-2]|9\\d))|9[0-35-9]\\d{2}|6[2567]\\d{2}|4(?:(?:10|4[01])\\d{3}|[68]\\d{4}|[579]\\d{2}))\\d{6}$",
+            "type": "string",
+            "description": "手机号码",
+            "example": "13812345678",
+            "refType": null
+          },
+          "captchaCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "type": "string",
+            "description": "短信验证码",
+            "example": "382956",
+            "refType": null
+          },
+          "newPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "新的密码",
+            "example": "Password..1234",
+            "refType": null
+          },
+          "checkPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "校验密码",
+            "example": "Password..1234",
+            "refType": null
+          }
+        },
+        "description": "通过手机重置密码请求参数"
+      },
+      "UserEmailResetPwdRequest": {
+        "required": [
+          "captchaCode",
+          "checkPassword",
+          "newPassword",
+          "userEmail"
+        ],
+        "type": "object",
+        "properties": {
+          "userEmail": {
+            "type": "string",
+            "description": "用户邮箱",
+            "example": "user@example.com",
+            "refType": null
+          },
+          "captchaCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "type": "string",
+            "description": "邮箱验证码",
+            "example": "382956",
+            "refType": null
+          },
+          "newPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "新的密码",
+            "example": "Password..1234",
+            "refType": null
+          },
+          "checkPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "校验密码",
+            "example": "Password..1234",
+            "refType": null
+          }
+        },
+        "description": "通过邮箱重置密码请求参数"
+      },
+      "UserPhoneRegisterRequest": {
+        "required": [
+          "captchaCode",
+          "checkPassword",
+          "userPassword",
+          "userPhone"
+        ],
+        "type": "object",
+        "properties": {
+          "userPhone": {
+            "pattern": "^(?:\\+?86)?1(?:3\\d{3}|5[^4\\D]\\d{2}|8\\d{3}|7(?:[0-35-9]\\d{2}|4(?:0\\d|1[0-2]|9\\d))|9[0-35-9]\\d{2}|6[2567]\\d{2}|4(?:(?:10|4[01])\\d{3}|[68]\\d{4}|[579]\\d{2}))\\d{6}$",
+            "type": "string",
+            "description": "手机号码",
+            "example": "13812345678",
+            "refType": null
+          },
+          "captchaCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "type": "string",
+            "description": "短信验证码",
+            "example": "382956",
+            "refType": null
+          },
+          "userPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "登录密码",
+            "example": "Password..1234",
+            "refType": null
+          },
+          "checkPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "确认密码",
+            "example": "Password..1234",
+            "refType": null
+          }
+        },
+        "description": "手机号注册请求参数"
+      },
+      "BaseResponseString": {
+        "required": ["code", "message", "success"],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "请求是否成功",
+            "example": true,
+            "enum": [true, false]
+          },
+          "code": {
+            "type": "integer",
+            "description": "状态码",
+            "format": "int32",
+            "example": 20000
+          },
+          "message": {
+            "type": "string",
+            "description": "响应消息",
+            "nullable": true,
+            "example": "操作成功"
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "description": "通用响应模型"
+      },
+      "UserEmailRegisterRequest": {
+        "required": [
+          "captchaCode",
+          "checkPassword",
+          "userEmail",
+          "userPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "userEmail": {
+            "type": "string",
+            "description": "邮箱地址",
+            "example": "user@example.com",
+            "refType": null
+          },
+          "captchaCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "type": "string",
+            "description": "邮箱验证码",
+            "example": "382956",
+            "refType": null
+          },
+          "userPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "登录密码",
+            "example": "Password..1234",
+            "refType": null
+          },
+          "checkPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "校验密码",
+            "example": "Password..1234",
+            "refType": null
+          }
+        },
+        "description": "邮箱注册请求参数"
+      },
+      "UserRegisterRequest": {
+        "required": ["checkPassword", "userAccount", "userPassword"],
+        "type": "object",
+        "properties": {
+          "userAccount": {
+            "maxLength": 32,
+            "minLength": 4,
+            "pattern": "^[a-zA-Z0-9@._]{4,32}$",
+            "type": "string",
+            "description": "登录账号",
+            "example": "admin",
+            "refType": null
+          },
+          "userPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "登录密码",
+            "example": "Password..1234",
+            "refType": null
+          },
+          "checkPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "校验密码",
+            "example": "Password..1234",
+            "refType": null
+          }
+        },
+        "description": "用户注册请求参数"
+      },
+      "UserPhoneLoginRequest": {
+        "required": ["captchaCode", "userPhone"],
+        "type": "object",
+        "properties": {
+          "userPhone": {
+            "pattern": "^(?:\\+?86)?1(?:3\\d{3}|5[^4\\D]\\d{2}|8\\d{3}|7(?:[0-35-9]\\d{2}|4(?:0\\d|1[0-2]|9\\d))|9[0-35-9]\\d{2}|6[2567]\\d{2}|4(?:(?:10|4[01])\\d{3}|[68]\\d{4}|[579]\\d{2}))\\d{6}$",
+            "type": "string",
+            "description": "手机号码",
+            "example": "13812345678",
+            "refType": null
+          },
+          "captchaCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "type": "string",
+            "description": "短信验证码",
+            "example": "382956",
+            "refType": null
+          }
+        },
+        "description": "手机号验证码登录请求参数"
+      },
+      "BaseResponseUserLoginVo": {
+        "required": ["code", "message", "success"],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "请求是否成功",
+            "example": true,
+            "enum": [true, false]
+          },
+          "code": {
+            "type": "integer",
+            "description": "状态码",
+            "format": "int32",
+            "example": 20000
+          },
+          "message": {
+            "type": "string",
+            "description": "响应消息",
+            "nullable": true,
+            "example": "操作成功"
+          },
+          "data": {
+            "$ref": "#/components/schemas/UserLoginVo"
+          }
+        },
+        "description": "通用响应模型"
+      },
+      "UserLoginVo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户主键ID，使用雪花算法生成",
+            "format": "int64",
+            "example": 386738996358914048,
+            "refType": null
+          },
+          "userAccount": {
+            "type": "string",
+            "description": "登录账号，必须唯一",
+            "example": "LingYun",
+            "refType": null
+          },
+          "userName": {
+            "type": "string",
+            "description": "用户昵称",
+            "example": "凌云",
+            "refType": null
+          },
+          "userAvatar": {
+            "type": "string",
+            "description": "用户头像 URL",
+            "example": "https://example.com/avatar.jpg",
+            "refType": null
+          },
+          "userProfile": {
+            "type": "string",
+            "description": "用户简介",
+            "example": "这是一个用户简介",
+            "refType": null
+          },
+          "userRole": {
+            "type": "string",
+            "description": "用户角色",
+            "example": "user",
+            "default": "user",
+            "enum": ["user", "admin", "user", "admin"],
+            "refType": null
+          },
+          "userGender": {
+            "type": "integer",
+            "description": "性别（0女 1男 2未知）",
+            "format": "int32",
+            "example": 2,
+            "default": 2,
+            "enum": [0, 1, 2],
+            "refType": null
+          },
+          "userPhone": {
+            "type": "string",
+            "description": "手机号",
+            "example": "13800000000",
+            "refType": null
+          },
+          "phoneVerified": {
+            "type": "integer",
+            "description": "手机号是否已验证（0未验证 1已验证）",
+            "format": "int32",
+            "example": 0,
+            "default": 0,
+            "enum": [0, 1],
+            "refType": null
+          },
+          "userEmail": {
+            "type": "string",
+            "description": "邮箱地址",
+            "example": "user13800@gmail.com",
+            "refType": null
+          },
+          "emailVerified": {
+            "type": "integer",
+            "description": "邮箱是否已验证（0未验证 1已验证）",
+            "format": "int32",
+            "example": 0,
+            "default": 0,
+            "enum": [0, 1],
+            "refType": null
+          },
+          "userStatus": {
+            "type": "integer",
+            "description": "状态（0正常 1封禁）",
+            "format": "int32",
+            "example": 0,
+            "default": 0,
+            "enum": [0, 1],
+            "refType": null
+          },
+          "createTime": {
+            "type": "string",
+            "description": "创建时间",
+            "format": "date-time",
+            "refType": null
+          }
+        },
+        "description": "登录用户信息视图对象（脱敏）"
+      },
+      "UserEmailLoginRequest": {
+        "required": ["captchaCode", "userEmail"],
+        "type": "object",
+        "properties": {
+          "userEmail": {
+            "type": "string",
+            "description": "邮箱地址",
+            "example": "user@example.com",
+            "refType": null
+          },
+          "captchaCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "type": "string",
+            "description": "邮箱验证码",
+            "example": "382956",
+            "refType": null
+          }
+        },
+        "description": "邮箱验证码登录请求参数"
+      },
+      "UserLoginRequest": {
+        "required": ["userAccount", "userPassword"],
+        "type": "object",
+        "properties": {
+          "userAccount": {
+            "maxLength": 32,
+            "minLength": 4,
+            "pattern": "^[a-zA-Z0-9@._]{4,32}$",
+            "type": "string",
+            "description": "登录账号",
+            "example": "admin",
+            "refType": null
+          },
+          "userPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "登录密码",
+            "example": "Password..1234",
+            "refType": null
+          }
+        },
+        "description": "用户登录请求参数"
+      },
+      "UserBindPhoneRequest": {
+        "required": ["captchaCode", "userPhone"],
+        "type": "object",
+        "properties": {
+          "userPhone": {
+            "pattern": "^(?:\\+?86)?1(?:3\\d{3}|5[^4\\D]\\d{2}|8\\d{3}|7(?:[0-35-9]\\d{2}|4(?:0\\d|1[0-2]|9\\d))|9[0-35-9]\\d{2}|6[2567]\\d{2}|4(?:(?:10|4[01])\\d{3}|[68]\\d{4}|[579]\\d{2}))\\d{6}$",
+            "type": "string",
+            "description": "手机号码",
+            "example": "13812345678",
+            "refType": null
+          },
+          "captchaCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "type": "string",
+            "description": "短信验证码",
+            "example": "382956",
+            "refType": null
+          }
+        },
+        "description": "用户绑定或换绑手机号请求参数"
+      },
+      "UserBindEmailRequest": {
+        "required": ["captchaCode", "userEmail"],
+        "type": "object",
+        "properties": {
+          "userEmail": {
+            "type": "string",
+            "description": "邮箱地址",
+            "example": "user@example.com",
+            "refType": null
+          },
+          "captchaCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "type": "string",
+            "description": "邮箱验证码",
+            "example": "382956",
+            "refType": null
+          }
+        },
+        "description": "用户绑定或换绑邮箱请求参数"
+      },
+      "SendCaptchaRequest": {
+        "required": ["scene", "target", "type"],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "验证码类型",
+            "example": "EMAIL",
+            "enum": ["EMAIL", "SMS"],
+            "refType": null
+          },
+          "scene": {
+            "type": "string",
+            "description": "验证码场景",
+            "example": "REGISTER",
+            "enum": ["REGISTER", "LOGIN", "RESET_PWD", "BIND_CHANGE"],
+            "refType": null
+          },
+          "target": {
+            "type": "string",
+            "description": "发送目标（邮箱或手机号）",
+            "example": "user@example.com",
+            "refType": null
+          }
+        },
+        "description": "发送验证码请求体"
+      },
+      "AdminUpdateUserInfoRequest": {
+        "required": ["id"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户主键 ID，使用雪花算法生成",
+            "format": "int64",
+            "example": 386738996358914048,
+            "refType": null
+          },
+          "userName": {
+            "maxLength": 20,
+            "minLength": 2,
+            "type": "string",
+            "description": "用户昵称",
+            "example": "凌云",
+            "refType": null
+          },
+          "userAvatar": {
+            "type": "string",
+            "description": "用户头像",
+            "example": "https://example.com/avatar.jpg",
+            "refType": null
+          },
+          "userProfile": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "description": "用户简介",
+            "example": "一名普通的程序员",
+            "refType": null
+          },
+          "userRole": {
+            "pattern": "^(?:user|admin)$",
+            "type": "string",
+            "description": "用户角色",
+            "example": "user",
+            "default": "user",
+            "enum": ["user", "admin"],
+            "refType": null
+          }
+        },
+        "description": "管理员更新用户信息请求体"
+      },
+      "AdminBanUserRequest": {
+        "required": ["id"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户主键 ID，使用雪花算法生成",
+            "format": "int64",
+            "example": 386738996358914048,
+            "refType": null
+          },
+          "userStatus": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "integer",
+            "description": "状态（0正常 1封禁）",
+            "format": "int32",
+            "example": 0,
+            "default": 0,
+            "enum": [0, 1],
+            "refType": null
+          }
+        },
+        "description": "管理员封禁或解封用户请求体"
+      },
+      "AdminResetUserPwdRequest": {
+        "required": ["id", "newPassword"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户主键 ID，使用雪花算法生成",
+            "format": "int64",
+            "example": 386738996358914048,
+            "refType": null
+          },
+          "newPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "新的密码",
+            "example": "Password..1234",
+            "refType": null
+          }
+        },
+        "description": "管理员重置用户密码请求体"
+      },
+      "AdminQueryUserRequest": {
+        "required": ["pageNum", "pageSize"],
+        "type": "object",
+        "properties": {
+          "pageNum": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "当前页码",
+            "format": "int32",
+            "example": 1,
+            "default": 1,
+            "refType": null
+          },
+          "pageSize": {
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer",
+            "description": "每页记录数",
+            "format": "int32",
+            "example": 10,
+            "default": 10,
+            "refType": null
+          },
+          "sortField": {
+            "pattern": "^[a-zA-Z0-9_]+$",
+            "type": "string",
+            "description": "排序字段",
+            "example": "createTime",
+            "refType": null
+          },
+          "sortOrder": {
+            "pattern": "^(?:ascend|descend)$",
+            "type": "string",
+            "description": "排序方式",
+            "example": "descend",
+            "default": "descend",
+            "enum": ["ascend", "descend"],
+            "refType": null
+          },
+          "id": {
+            "type": "integer",
+            "description": "用户主键 ID，使用雪花算法生成",
+            "format": "int64",
+            "example": 386738996358914048,
+            "refType": null
+          },
+          "userAccount": {
+            "maxLength": 32,
+            "minLength": 4,
+            "pattern": "^[a-zA-Z0-9@._]{4,32}$",
+            "type": "string",
+            "description": "登录账号",
+            "example": "admin",
+            "refType": null
+          },
+          "userName": {
+            "maxLength": 20,
+            "minLength": 2,
+            "type": "string",
+            "description": "用户昵称",
+            "example": "凌云",
+            "refType": null
+          },
+          "userProfile": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "description": "用户简介",
+            "example": "一名普通的程序员",
+            "refType": null
+          },
+          "userRole": {
+            "pattern": "^(?:user|admin)$",
+            "type": "string",
+            "description": "用户角色",
+            "example": "user",
+            "default": "user",
+            "enum": ["user", "admin"],
+            "refType": null
+          },
+          "userGender": {
+            "maximum": 2,
+            "minimum": 0,
+            "type": "integer",
+            "description": "性别（0女 1男 2未知）",
+            "format": "int32",
+            "example": 2,
+            "default": 2,
+            "enum": [0, 1, 2],
+            "refType": null
+          },
+          "userPhone": {
+            "pattern": "^(?:\\+?86)?1(?:3\\d{3}|5[^4\\D]\\d{2}|8\\d{3}|7(?:[0-35-9]\\d{2}|4(?:0\\d|1[0-2]|9\\d))|9[0-35-9]\\d{2}|6[2567]\\d{2}|4(?:(?:10|4[01])\\d{3}|[68]\\d{4}|[579]\\d{2}))\\d{6}$",
+            "type": "string",
+            "description": "手机号",
+            "example": "13800000000",
+            "refType": null
+          },
+          "userEmail": {
+            "type": "string",
+            "description": "邮箱地址",
+            "example": "user13800@gmail.com",
+            "refType": null
+          },
+          "userStatus": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "integer",
+            "description": "状态（0正常 1封禁）",
+            "format": "int32",
+            "example": 0,
+            "default": 0,
+            "enum": [0, 1],
+            "refType": null
+          },
+          "createTimeStart": {
+            "type": "string",
+            "description": "创建起始时间",
+            "format": "date-time",
+            "refType": null
+          },
+          "createTimeEnd": {
+            "type": "string",
+            "description": "创建结束时间",
+            "format": "date-time",
+            "refType": null
+          }
+        },
+        "description": "管理员查询用户请求体"
+      },
+      "BaseResponsePageUserVo": {
+        "required": ["code", "message", "success"],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "请求是否成功",
+            "example": true,
+            "enum": [true, false]
+          },
+          "code": {
+            "type": "integer",
+            "description": "状态码",
+            "format": "int32",
+            "example": 20000
+          },
+          "message": {
+            "type": "string",
+            "description": "响应消息",
+            "nullable": true,
+            "example": "操作成功"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageUserVo"
+          }
+        },
+        "description": "通用响应模型"
+      },
+      "OrderItem": {
+        "type": "object",
+        "properties": {
+          "column": {
+            "type": "string",
+            "refType": null
+          },
+          "asc": {
+            "type": "boolean",
+            "refType": null
+          }
+        }
+      },
+      "PageUserVo": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserVo"
+            },
+            "refType": "UserVo"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64",
+            "refType": null
+          },
+          "orders": {
+            "type": "array",
+            "writeOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            },
+            "refType": "OrderItem"
+          },
+          "optimizeCountSql": {
+            "$ref": "#/components/schemas/PageUserVo",
+            "refType": "PageUserVo"
+          },
+          "searchCount": {
+            "$ref": "#/components/schemas/PageUserVo",
+            "refType": "PageUserVo"
+          },
+          "optimizeJoinOfCountSql": {
+            "type": "boolean",
+            "writeOnly": true,
+            "refType": null
+          },
+          "maxLimit": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true,
+            "refType": null
+          },
+          "countId": {
+            "type": "string",
+            "writeOnly": true,
+            "refType": null
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64",
+            "deprecated": true,
+            "refType": null
+          }
+        }
+      },
+      "UserVo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户主键ID，使用雪花算法生成",
+            "format": "int64",
+            "example": 386738996358914048,
+            "refType": null
+          },
+          "userAccount": {
+            "type": "string",
+            "description": "登录账号，必须唯一",
+            "example": "LingYun",
+            "refType": null
+          },
+          "userName": {
+            "type": "string",
+            "description": "用户昵称",
+            "example": "凌云",
+            "refType": null
+          },
+          "userAvatar": {
+            "type": "string",
+            "description": "用户头像 URL",
+            "example": "https://example.com/avatar.jpg",
+            "refType": null
+          },
+          "userProfile": {
+            "type": "string",
+            "description": "用户简介",
+            "example": "这是一个用户简介",
+            "refType": null
+          },
+          "userRole": {
+            "type": "string",
+            "description": "用户角色",
+            "example": "user",
+            "default": "user",
+            "enum": ["user", "admin", "user", "admin"],
+            "refType": null
+          },
+          "userGender": {
+            "type": "integer",
+            "description": "性别（0女 1男 2未知）",
+            "format": "int32",
+            "example": 2,
+            "default": 2,
+            "enum": [0, 1, 2],
+            "refType": null
+          },
+          "userPhone": {
+            "type": "string",
+            "description": "手机号",
+            "example": "13800000000",
+            "refType": null
+          },
+          "phoneVerified": {
+            "type": "integer",
+            "description": "手机号是否已验证（0未验证 1已验证）",
+            "format": "int32",
+            "example": 0,
+            "default": 0,
+            "enum": [0, 1],
+            "refType": null
+          },
+          "userEmail": {
+            "type": "string",
+            "description": "邮箱地址",
+            "example": "user13800@gmail.com",
+            "refType": null
+          },
+          "emailVerified": {
+            "type": "integer",
+            "description": "邮箱是否已验证（0未验证 1已验证）",
+            "format": "int32",
+            "example": 0,
+            "default": 0,
+            "enum": [0, 1],
+            "refType": null
+          },
+          "userStatus": {
+            "type": "integer",
+            "description": "状态（0正常 1封禁）",
+            "format": "int32",
+            "example": 0,
+            "default": 0,
+            "enum": [0, 1],
+            "refType": null
+          },
+          "editTime": {
+            "type": "string",
+            "description": "编辑时间",
+            "format": "date-time",
+            "refType": null
+          },
+          "createTime": {
+            "type": "string",
+            "description": "创建时间",
+            "format": "date-time",
+            "refType": null
+          },
+          "updateTime": {
+            "type": "string",
+            "description": "更新时间",
+            "format": "date-time",
+            "refType": null
+          }
+        },
+        "description": "用户视图（脱敏）"
+      },
+      "GetOrDeleteRequest": {
+        "required": ["id"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "主键 ID",
+            "format": "int64",
+            "example": 386738996358914048,
+            "refType": null
+          }
+        },
+        "description": "获取或删除请求参数"
+      },
+      "BaseResponseUserVo": {
+        "required": ["code", "message", "success"],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "请求是否成功",
+            "example": true,
+            "enum": [true, false]
+          },
+          "code": {
+            "type": "integer",
+            "description": "状态码",
+            "format": "int32",
+            "example": 20000
+          },
+          "message": {
+            "type": "string",
+            "description": "响应消息",
+            "nullable": true,
+            "example": "操作成功"
+          },
+          "data": {
+            "$ref": "#/components/schemas/UserVo"
+          }
+        },
+        "description": "通用响应模型"
+      },
+      "AdminAddUserRequest": {
+        "required": ["checkPassword", "userAccount", "userPassword"],
+        "type": "object",
+        "properties": {
+          "userAccount": {
+            "maxLength": 32,
+            "minLength": 4,
+            "pattern": "^[a-zA-Z0-9@._]{4,32}$",
+            "type": "string",
+            "description": "登录账号",
+            "example": "admin",
+            "refType": null
+          },
+          "userPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "登录密码",
+            "example": "Password..1234",
+            "refType": null
+          },
+          "checkPassword": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?])[A-Za-z\\d~`!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?]{8,20}$",
+            "type": "string",
+            "description": "校验密码",
+            "example": "Password..1234",
+            "refType": null
+          },
+          "userName": {
+            "maxLength": 20,
+            "minLength": 2,
+            "type": "string",
+            "description": "用户昵称",
+            "example": "凌云",
+            "refType": null
+          },
+          "userAvatar": {
+            "type": "string",
+            "description": "用户头像",
+            "example": "https://example.com/avatar.jpg",
+            "refType": null
+          },
+          "userProfile": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "description": "用户简介",
+            "example": "一名普通的程序员",
+            "refType": null
+          },
+          "userRole": {
+            "pattern": "^(?:user|admin)$",
+            "type": "string",
+            "description": "用户角色",
+            "example": "user",
+            "default": "user",
+            "enum": ["user", "admin"],
+            "refType": null
+          },
+          "userGender": {
+            "maximum": 2,
+            "minimum": 0,
+            "type": "integer",
+            "description": "性别（0女 1男 2未知）",
+            "format": "int32",
+            "example": 2,
+            "default": 2,
+            "enum": [0, 1, 2],
+            "refType": null
+          },
+          "userPhone": {
+            "pattern": "^(?:\\+?86)?1(?:3\\d{3}|5[^4\\D]\\d{2}|8\\d{3}|7(?:[0-35-9]\\d{2}|4(?:0\\d|1[0-2]|9\\d))|9[0-35-9]\\d{2}|6[2567]\\d{2}|4(?:(?:10|4[01])\\d{3}|[68]\\d{4}|[579]\\d{2}))\\d{6}$",
+            "type": "string",
+            "description": "手机号",
+            "example": "13800000000",
+            "refType": null
+          },
+          "userEmail": {
+            "type": "string",
+            "description": "邮箱地址",
+            "example": "user13800@gmail.com",
+            "refType": null
+          }
+        },
+        "description": "管理员添加用户请求体"
+      }
+    }
+  },
+  "x-openapi": {
+    "x-setting": {
+      "customCode": 200,
+      "language": "zh-CN",
+      "enableSwaggerModels": true,
+      "swaggerModelName": "Swagger Models",
+      "enableReloadCacheParameter": false,
+      "enableAfterScript": true,
+      "enableDocumentManage": true,
+      "enableVersion": false,
+      "enableRequestCache": true,
+      "enableFilterMultipartApis": false,
+      "enableFilterMultipartApiMethodType": "POST",
+      "enableHost": false,
+      "enableHostText": "",
+      "enableDynamicParameter": false,
+      "enableDebug": true,
+      "enableFooter": true,
+      "enableFooterCustom": false,
+      "enableSearch": true,
+      "enableOpenApi": true,
+      "enableHomeCustom": false,
+      "enableGroup": true,
+      "enableResponseCode": true
+    },
+    "x-markdownFiles": []
+  }
+}

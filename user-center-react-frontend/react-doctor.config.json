@@ -1,0 +1,19 @@
+{
+  "ignore": {
+    "files": [
+      "config/**",
+      "mock/**",
+      "public/**",
+      "scripts/**",
+      "types/**",
+      "src/.umi*/**",
+      "src/services/**",
+      "**/_mock.ts",
+      "**/*.md",
+      "**/*.less",
+      "**/*.css"
+    ]
+  },
+  "failOn": "error",
+  "adoptExistingLintConfig": true
+}
