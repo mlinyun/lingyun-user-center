@@ -1,11 +1,18 @@
 /**
  * @see https://umijs.org/docs/max/access#access
  * */
+import { USER_ROLE } from "@/constants/user";
+import type { AuthState } from "@/stores/auth";
+
 export default function access(
-  initialState: { currentUser?: API.UserLoginVo } | undefined,
+  initialState:
+    | {
+        auth?: AuthState;
+      }
+    | undefined,
 ) {
-  const { currentUser } = initialState ?? {};
+  const currentUser = initialState?.auth?.user;
   return {
-    canAdmin: currentUser && currentUser.userRole === "admin",
+    canAdmin: currentUser?.userRole === USER_ROLE.ADMIN,
   };
 }

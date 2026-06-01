@@ -1,0 +1,15 @@
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_LENGTH = 20;
+
+/** 密码格式正则：8-20位，需包含大小写字母、数字、特殊字符 */
+export const PWD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~`!@#$%^&*()\-_=+[{\]}\\|;:'",<.>/?])[A-Za-z\d~`!@#$%^&*()\-_=+[{\]}\\|;:'",<.>/?]{8,20}$/;
+
+/** 手机号码正则 */
+export const PHONE_REGEX = /^1[3-9]\d{9}$/;
+
+/** 6位数字验证码正则 */
+export const CODE_REGEX = /^\d{6}$/;
+
+/** 登录账号正则：只能包含字数、数字和下划线 */
+export const ACCOUNT_REGEX = /^[a-zA-Z0-9_]+$/;

@@ -6,8 +6,9 @@ import {
 import { history, useModel } from "@umijs/max";
 import type { MenuProps } from "antd";
 import { Spin } from "antd";
-import React, { startTransition } from "react";
-import { userLogout } from "@/services/ant-design-pro/user";
+import React from "react";
+import { ROUTES } from "@/constants/routes";
+import { authStore } from "@/stores/auth";
 import HeaderDropdown from "../HeaderDropdown";
 
 type GlobalHeaderRightProps = {
@@ -18,18 +19,12 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   children,
 }) => {
   const loginOut = async () => {
-    await userLogout();
-    const { search, pathname } = window.location;
-    const urlParams = new URL(window.location.href).searchParams;
-    const searchParams = new URLSearchParams({
-      redirect: pathname + search,
-    });
-    const redirect = urlParams.get("redirect");
-    if (window.location.pathname !== "/auth/login" && !redirect) {
-      history.replace({
-        pathname: "/auth/login",
-        search: searchParams.toString(),
-      });
+    await authStore.logout();
+    const { pathname, search } = history.location;
+    if (pathname !== ROUTES.LOGIN.path) {
+      history.replace(
+        `${ROUTES.LOGIN.path}?redirect=${encodeURIComponent(pathname + search)}`,
+      );
     }
   };
   const { initialState, setInitialState } = useModel("@@initialState");
@@ -37,24 +32,23 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   const onMenuClick: MenuProps["onClick"] = (event) => {
     const { key } = event;
     if (key === "logout") {
-      startTransition(() => {
-        setInitialState((s) => ({ ...s, currentUser: undefined }));
-      });
-      loginOut();
+      void loginOut();
       return;
     }
     if (key === "theme") {
-      setInitialState((s) => ({ ...s, settingDrawerOpen: true }));
+      setInitialState((s) => ({ ...(s ?? {}), settingDrawerOpen: true }));
       return;
     }
-    history.push(`/account/${key}`);
+    if (key === "settings") {
+      history.push(ROUTES.SETTINGS.path);
+    }
   };
 
   if (!initialState) {
     return <Spin size="small" />;
   }
 
-  const { currentUser } = initialState;
+  const currentUser = initialState.auth?.user;
 
   if (!currentUser) {
     return <Spin size="small" />;

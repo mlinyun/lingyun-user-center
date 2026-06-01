@@ -2,28 +2,14 @@ import type { AxiosResponse, RequestConfig, RequestOptions } from "@umijs/max";
 import { history } from "@umijs/max";
 import { message, notification } from "antd";
 import type { ReactNode } from "react";
-
-enum BusinessCode {
-  SUCCESS = 20000,
-  PARAM_ERROR = 40000,
-  NOT_LOGIN = 40100,
-  NO_AUTH = 40101,
-  FORBIDDEN = 40300,
-  NOT_FOUND = 40400,
-  SERVER_ERROR = 50000,
-  OPERATION_ERROR = 50001,
-}
-
-const CODE_MESSAGES: Record<BusinessCode, string> = {
-  [BusinessCode.SUCCESS]: "操作成功",
-  [BusinessCode.PARAM_ERROR]: "请求参数错误",
-  [BusinessCode.NOT_LOGIN]: "用户未登录",
-  [BusinessCode.NO_AUTH]: "认证失败",
-  [BusinessCode.FORBIDDEN]: "禁止访问",
-  [BusinessCode.NOT_FOUND]: "资源不存在",
-  [BusinessCode.SERVER_ERROR]: "服务器内部错误",
-  [BusinessCode.OPERATION_ERROR]: "操作失败",
-};
+import {
+  getMessageByCode,
+  isAuthError,
+  isPermissionError,
+  isServerError,
+  isSuccess,
+} from "@/constants/code";
+import { ROUTES } from "@/constants/routes";
 
 interface ApiResponse<T = unknown> {
   success?: boolean;
@@ -57,7 +43,7 @@ interface BizError extends Error {
   info: BizErrorInfo;
 }
 
-const loginPath = "/auth/login";
+const loginPath = ROUTES.LOGIN.path;
 const authExpiredNotifyCooldownMs = 2000;
 
 let isRedirectingToLogin = false;
@@ -69,20 +55,6 @@ let authExpiredHandler: (() => void) | undefined;
 export const setAuthExpiredHandler = (handler: () => void): void => {
   authExpiredHandler = handler;
 };
-
-const isSuccess = (code?: number): boolean => code === BusinessCode.SUCCESS;
-
-const isAuthError = (code?: number): boolean =>
-  code === BusinessCode.NOT_LOGIN || code === BusinessCode.NO_AUTH;
-
-const isPermissionError = (code?: number): boolean =>
-  code === BusinessCode.FORBIDDEN;
-
-const isServerError = (code?: number): boolean =>
-  code === BusinessCode.SERVER_ERROR || code === BusinessCode.OPERATION_ERROR;
-
-const getMessageByCode = (code?: number): string =>
-  CODE_MESSAGES[code as BusinessCode] || "未知错误";
 
 const isApiResponse = (data: unknown): data is ApiResponse =>
   typeof data === "object" &&
@@ -317,10 +289,6 @@ const handleResponse = <T>(response: AxiosResponse<T>): AxiosResponse<T> => {
       );
     }
     return response;
-  }
-
-  if (responseData.success !== false) {
-    throw createBizError(responseData);
   }
   return response;
 };

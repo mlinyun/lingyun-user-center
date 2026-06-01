@@ -1,5 +1,9 @@
 export default [
   {
+    path: "/",
+    redirect: "/home",
+  },
+  {
     path: "/home",
     name: "系统首页",
     icon: "smile",
@@ -34,22 +38,18 @@ export default [
     ],
   },
   {
-    path: "/admin",
-    name: "管理页",
+    path: "/manage",
+    name: "用户管理",
     icon: "crown",
     access: "canAdmin",
-    routes: [
-      {
-        path: "/admin/manage",
-        name: "用户管理",
-        component: "./admin/manage",
-      },
-      {
-        path: "/admin/health",
-        name: "健康检查",
-        component: "./admin/health",
-      },
-    ],
+    component: "./admin/manage",
+  },
+  {
+    path: "/health",
+    name: "健康检查",
+    icon: "heart",
+    access: "canAdmin",
+    component: "./admin/health",
   },
   {
     component: "./exception/404",

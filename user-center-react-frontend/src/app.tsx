@@ -3,9 +3,10 @@ import type { Settings as LayoutSettings } from "@ant-design/pro-components";
 import { SettingDrawer } from "@ant-design/pro-components";
 import type { RequestConfig, RunTimeLayoutConfig } from "@umijs/max";
 import { history, Link } from "@umijs/max";
+import { message } from "antd";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import React from "react";
+import React, { useEffect } from "react";
 
 // Initialize dayjs plugins globally
 dayjs.extend(relativeTime);
@@ -16,54 +17,49 @@ import {
   Footer,
   OfflineBanner,
 } from "@/components";
-import { getLoginUserInfo as queryCurrentUser } from "@/services/ant-design-pro/user";
+import { CONTENT_TYPE, REQUEST_TIMEOUT, ROUTES } from "@/constants";
+import { type AuthState, authStore, bindAuthStore } from "@/stores/auth";
+import {
+  bindLayoutStore,
+  type LayoutState,
+  layoutStore,
+} from "@/stores/layout";
+import { getSafeAuthRedirect } from "@/utils/redirect/auth-redirect";
 import defaultSettings from "../config/defaultSettings";
 import { errorConfig, setAuthExpiredHandler } from "./requestErrorConfig";
 
-const loginPath = "/auth/login";
+const loginPath = ROUTES.LOGIN.path;
+const AUTH_ROUTE_PREFIX = "/auth";
+
+const isAuthRoute = (path: string): boolean =>
+  path === AUTH_ROUTE_PREFIX || path.startsWith(`${AUTH_ROUTE_PREFIX}/`);
+
+const resolveRouteMeta = (
+  path: string,
+): (typeof ROUTES)[keyof typeof ROUTES] | undefined =>
+  Object.values(ROUTES).find((route) => route.path === path);
+
+const getCurrentPath = (): string => {
+  const { pathname, search, hash } = history.location;
+  return `${pathname}${search}${hash}`;
+};
 
 /**
  * @see https://umijs.org/docs/api/runtime-config#getinitialstate
  * */
-export async function getInitialState(): Promise<{
+export interface InitialState {
   settings?: Partial<LayoutSettings>;
-  currentUser?: API.UserLoginVo;
-  loading?: boolean;
-  fetchUserInfo?: () => Promise<API.UserLoginVo | undefined>;
+  auth?: AuthState;
+  layout?: LayoutState;
   settingDrawerOpen?: boolean;
-}> {
-  const fetchUserInfo = async () => {
-    try {
-      const msg = await queryCurrentUser({
-        skipErrorHandler: true,
-      });
-      return msg.data;
-    } catch (_error) {
-      const { pathname, search, hash } = history.location;
-      history.replace(
-        `${loginPath}?redirect=${encodeURIComponent(pathname + search + hash)}`,
-      );
-    }
-    return undefined;
-  };
-  // 如果不是登录页面，执行
-  const { location } = history;
-  if (
-    ![loginPath, "/auth/register", "/auth/register-result"].includes(
-      location.pathname,
-    )
-  ) {
-    const currentUser = await fetchUserInfo();
-    return {
-      fetchUserInfo,
-      currentUser,
-      settings: defaultSettings as Partial<LayoutSettings>,
-      settingDrawerOpen: false,
-    };
-  }
+  loading?: boolean;
+}
+
+export async function getInitialState(): Promise<InitialState> {
   return {
-    fetchUserInfo,
     settings: defaultSettings as Partial<LayoutSettings>,
+    auth: authStore.getState(),
+    layout: layoutStore.getState(),
     settingDrawerOpen: false,
   };
 }
@@ -73,12 +69,13 @@ export const layout: RunTimeLayoutConfig = ({
   initialState,
   setInitialState,
 }) => {
+  bindAuthStore(setInitialState);
+  bindLayoutStore(setInitialState);
   setAuthExpiredHandler(() => {
-    setInitialState((state) => ({
-      ...state,
-      currentUser: undefined,
-    }));
+    authStore.clearAuthState();
   });
+
+  const currentUser = initialState?.auth?.user;
 
   return {
     menuItemRender: (item, dom) => {
@@ -93,24 +90,69 @@ export const layout: RunTimeLayoutConfig = ({
     },
     actionsRender: () => [<GithubOutlined key="github" />],
     avatarProps: {
-      src: initialState?.currentUser?.userAvatar,
-      title: initialState?.currentUser?.userName,
+      src: currentUser?.userAvatar,
+      title: currentUser?.userName,
       render: (_, avatarChildren) => (
         <AvatarDropdown>{avatarChildren}</AvatarDropdown>
       ),
     },
     waterMarkProps: {
-      content: initialState?.currentUser?.userName,
+      content: currentUser?.userName,
     },
     footerRender: () => <Footer />,
-    onPageChange: () => {
+    onPageChange: async () => {
       const { location } = history;
-      // 如果没有登录，重定向到 login
-      if (!initialState?.currentUser && location.pathname !== loginPath) {
-        history.replace(
-          `${loginPath}?redirect=${encodeURIComponent(location.pathname + location.search + location.hash)}`,
-        );
+      const path = location.pathname;
+      const authRoute = isAuthRoute(path);
+      const routeMeta = resolveRouteMeta(path);
+      const needsAuth = routeMeta?.requiresAuth ?? false;
+      const needsAdmin =
+        routeMeta && "requiresAdmin" in routeMeta
+          ? Boolean(routeMeta.requiresAdmin)
+          : false;
+
+      try {
+        if (authRoute && authStore.isAuthenticated()) {
+          const redirect = new URLSearchParams(location.search).get("redirect");
+          history.replace(getSafeAuthRedirect(redirect));
+          return;
+        }
+
+        if (needsAuth) {
+          await authStore.bootstrap({ strict: true });
+
+          if (!authStore.isAuthenticated()) {
+            history.replace(
+              `${loginPath}?redirect=${encodeURIComponent(getCurrentPath())}`,
+            );
+            return;
+          }
+
+          if (needsAdmin && !authStore.isAdmin()) {
+            message.error("当前账号无权访问该页面");
+            history.replace(ROUTES.HOME.path);
+          }
+          return;
+        }
+
+        if (!authRoute && !authStore.getState().initialized) {
+          void authStore.bootstrap().catch((error) => {
+            console.error("Silent auth bootstrap failed:", error);
+          });
+        }
+      } catch (error) {
+        console.error("Router auth guard error:", error);
+        authStore.clearAuthState();
+        if (needsAuth) {
+          history.replace(
+            `${loginPath}?redirect=${encodeURIComponent(getCurrentPath())}`,
+          );
+        }
       }
+    },
+    collapsed: initialState?.layout?.sidebarCollapsed,
+    onCollapse: (collapsed) => {
+      layoutStore.setSidebarCollapsed(collapsed);
     },
     bgLayoutImgList: [
       {
@@ -150,14 +192,14 @@ export const layout: RunTimeLayoutConfig = ({
             collapse={initialState?.settingDrawerOpen}
             onCollapseChange={(open) => {
               setInitialState((s) => ({
-                ...s,
+                ...(s ?? {}),
                 settingDrawerOpen: open,
               }));
             }}
             settings={initialState?.settings}
             onSettingChange={(settings) => {
               setInitialState((s) => ({
-                ...s,
+                ...(s ?? {}),
                 settings,
               }));
             }}
@@ -176,19 +218,34 @@ export const layout: RunTimeLayoutConfig = ({
  */
 export const request: RequestConfig = {
   baseURL: "/api",
-  timeout: 10000,
+  timeout: REQUEST_TIMEOUT,
   withCredentials: true,
   headers: {
-    "Content-Type": "application/json;charset=UTF-8",
+    "Content-Type": CONTENT_TYPE.JSON,
   },
   ...errorConfig,
+};
+
+const AuthHeartbeat: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  useEffect(() => {
+    authStore.startSessionHeartbeat();
+    return () => {
+      authStore.stopSessionHeartbeat();
+    };
+  }, []);
+
+  return <>{children}</>;
 };
 
 export function rootContainer(container: React.ReactNode) {
   return (
     <>
       <OfflineBanner />
-      <ErrorBoundary>{container}</ErrorBoundary>
+      <ErrorBoundary>
+        <AuthHeartbeat>{container}</AuthHeartbeat>
+      </ErrorBoundary>
     </>
   );
 }

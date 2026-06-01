@@ -13,9 +13,11 @@ dist/
 node_modules/
 
 # AI generated files
+.claude/
 .github/copilot-instructions.md
+.github/prompts/
 CLAUDE.md
+AGENTS.md
 
 # Ignore environment-specific configuration files
-user-center-backend/src.main/resources/application-local.yaml
-
+user-center-backend/src/main/resources/application-local.yaml

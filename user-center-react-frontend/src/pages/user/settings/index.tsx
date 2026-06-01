@@ -1,12 +1,61 @@
-import React from "react";
+import { useModel } from "@umijs/max";
+import { Col, Layout, Row, Spin } from "antd";
+import { createStyles } from "antd-style";
+import React, { useEffect, useState } from "react";
+import { authStore } from "@/stores/auth";
+import AccountSecurity from "./components/AccountSecurity";
+import BasicInfo from "./components/BasicInfo";
+import PasswordManagement from "./components/PasswordManagement";
+import UserAvatar from "./components/UserAvatar";
 
-const Settings = () => {
+const useStyles = createStyles(() => ({
+  container: {
+    height: "100%",
+    background: "rgb(255 255 255 / 80%)",
+    padding: 24,
+  },
+}));
+
+const UserSettings: React.FC = () => {
+  const { initialState } = useModel("@@initialState");
+  const currentUser = initialState?.auth?.user;
+  const [loading, setLoading] = useState(false);
+  const { styles } = useStyles();
+
+  useEffect(() => {
+    if (!currentUser) {
+      setLoading(true);
+      authStore
+        .refreshCurrentUser()
+        .catch((error) => {
+          console.log("刷新用户信息失败:", error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, []);
+
   return (
-    <div style={{ textAlign: "center", marginTop: "20vh" }}>
-      <h1>账号设置页面</h1>
-      <p>这是一个占位的账号设置页面，后续会添加账号设置功能。</p>
-    </div>
+    <Layout className={styles.container}>
+      <Spin spinning={loading}>
+        <Row gutter={[24, 24]}>
+          <Col md={12} xs={24}>
+            <UserAvatar />
+          </Col>
+          <Col md={12} xs={24}>
+            <BasicInfo />
+          </Col>
+          <Col md={12} xs={24}>
+            <AccountSecurity />
+          </Col>
+          <Col md={12} xs={24}>
+            <PasswordManagement />
+          </Col>
+        </Row>
+      </Spin>
+    </Layout>
   );
 };
 
-export default Settings;
+export default UserSettings;
