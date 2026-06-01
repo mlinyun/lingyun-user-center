@@ -1,5 +1,5 @@
-name: Frontend CI/CD Workflow
-run-name: Frontend CI/CD Workflow triggered by ${{ github.actor }} on ${{ github.ref_name }} via ${{ github.event_name }}
+name: Vue Frontend CI/CD Workflow
+run-name: Vue Frontend CI/CD Workflow triggered by ${{ github.actor }} on ${{ github.ref_name }} via ${{ github.event_name }}
 
 on:
   push:

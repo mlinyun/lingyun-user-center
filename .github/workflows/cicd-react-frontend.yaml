@@ -1,0 +1,60 @@
+name: React Frontend CI/CD Workflow
+run-name: React Frontend CI/CD Workflow triggered by ${{ github.actor }} on ${{ github.ref_name }} via ${{ github.event_name }}
+
+on:
+  push:
+    paths:
+      - "user-center-react-frontend/**"
+      - ".github/workflows/cicd-react-frontend.yaml"
+  pull_request:
+    paths:
+      - "user-center-react-frontend/**"
+      - ".github/workflows/cicd-react-frontend.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Install, Lint and Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: user-center-react-frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Enable Corepack and prepare pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.1.2 --activate
+
+      - name: Print current branch ref
+        run: echo ${{ github.ref }}
+
+      - name: Set up Utoo
+        uses: utooland/setup-utoo@v1
+        with:
+          cache-utoo: false
+
+      - name: Install dependencies
+        run: ut
+      - name: Run lint
+        run: ut lint
+      - name: Build project
+        run: ut build
+        env:
+          CI: true
+          PROGRESS: none
+          NODE_ENV: test
+          NODE_OPTIONS: --max-old-space-size=4096
