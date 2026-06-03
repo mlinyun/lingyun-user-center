@@ -57,6 +57,25 @@ jobs:
       - name: Run lint
         run: pnpm biome:lint
 
+      - name: Check installation
+        run: |
+          # 验证 @umijs/max 是否正确安装
+          if [ -d "node_modules/@umijs/max" ]; then
+            echo "✅ @umijs/max installed"
+            ls -la node_modules/@umijs/max/
+          else
+            echo "❌ @umijs/max not found"
+            exit 1
+          fi
+
+          # 检查类型定义文件
+          if [ -f "node_modules/@umijs/max/index.d.ts" ]; then
+            echo "✅ Type definitions found"
+          else
+            echo "❌ Type definitions missing"
+            exit 1
+          fi
+
       - name: Type check
         run: pnpm tsc
 
