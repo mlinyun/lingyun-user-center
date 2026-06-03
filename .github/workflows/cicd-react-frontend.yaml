@@ -39,22 +39,32 @@ jobs:
           corepack enable
           corepack prepare pnpm@11.1.2 --activate
 
-      - name: Print current branch ref
-        run: echo ${{ github.ref }}
+      - name: Get pnpm store directory
+        id: pnpm-store
+        run: echo "store_path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
-      - name: Set up Utoo
-        uses: utooland/setup-utoo@v1
+      - name: Cache pnpm store
+        uses: actions/cache@v5
         with:
-          cache-utoo: false
+          path: ${{ steps.pnpm-store.outputs.store_path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('user-center-react-frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
-        run: ut
+        run: pnpm install --frozen-lockfile
+
       - name: Run lint
-        run: ut lint
-      - name: Build project
-        run: ut build
-        env:
-          CI: true
-          PROGRESS: none
-          NODE_ENV: test
-          NODE_OPTIONS: --max-old-space-size=4096
+        run: pnpm biome:lint
+
+      - name: Type check
+        run: pnpm tsc
+
+      - name: Build
+        run: pnpm build
+
+      - name: Upload built frontend as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: user-center-react-frontend/dist

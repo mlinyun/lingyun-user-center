@@ -16,7 +16,6 @@ node_modules/
 .claude/
 .github/copilot-instructions.md
 .github/prompts/
-CLAUDE.md
 AGENTS.md
 
 # Ignore environment-specific configuration files
